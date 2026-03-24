@@ -15,12 +15,12 @@
     --panel:#ffffff;
     --border:rgba(0,0,0,.18);
 
-    /* ✅ ESTRUCTURADA: mida i aire */
+    /* ESTRUCTURADA: mida i aire */
     --struct-card-h: 90px;
     --struct-gap: 4px;
 
-    /* ✅ “carril” dins la columna: on volem snap-x (percent de l’amplada de la columna) */
-    --lane-x: 0.66; /* 0.66 = cap a la dreta, però dins la columna */
+    /* “carril” dins la columna: on volem snap-x */
+    --lane-x: 0.66; 
   }
 
   body{
@@ -83,6 +83,9 @@
     font-weight:700;
     cursor:pointer;
   }
+  
+  .btn-pick { background: #007bff; color: white; }
+  .btn-pick:hover { background: #0056b3; }
 
   .hint{
     font-size:12px;
@@ -207,14 +210,12 @@
       radial-gradient(circle at 1px 1px, rgba(0,0,0,.06) 1px, transparent 0) 0 0/24px 24px;
   }
 
-  /* Base sempre a sota */
   .freeBase{
     position:absolute;
     inset:0;
     z-index: 1;
     pointer-events:none;
   }
-  /* Tot el que arrossegues a sobre */
   .freeOverlay{
     position:absolute;
     inset:0;
@@ -311,7 +312,6 @@
     font-size:13px;
   }
 
-  /* ✅ Columnes no s’inflen */
   .matrix{
     display:grid;
     gap: var(--struct-gap);
@@ -334,7 +334,6 @@
     min-width:0;
   }
 
-  /* ✅ Slot: carta de creació enganxada a l'esquerra, espai lliure a la dreta */
   .cardSlot{
     width:100%;
     height: var(--struct-card-h);
@@ -366,7 +365,6 @@
     z-index: 1;
   }
 
-  /* Overlay per cartes arrossegades (sempre a sobre de la base) */
   .structuredOverlay{
     position:absolute;
     inset: 0;
@@ -379,9 +377,8 @@
 
   .hidden{ display:none !important; }
 
-  /* ✅ Estils per la llicència CC */
   .footer-license {
-    grid-column: 1 / -1; /* Ocupa tota l'amplada de la graella layout */
+    grid-column: 1 / -1; 
     margin-top: 40px;
     padding: 20px;
     border-top: 1px solid var(--border);
@@ -389,6 +386,30 @@
     font-size: 13px;
     color: #666;
   }
+
+  /* ===== MODAL ===== */
+  .modal-overlay { 
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; 
+  }
+  .modal-contingut { 
+      background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 900px; 
+      max-height: 90vh; overflow-y: auto; text-align: center; 
+  }
+  
+  .modal-graella { 
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+      gap: 15px; margin-top: 20px; 
+  }
+  
+  .carta-opcio { 
+      position: relative; border: 2px solid #ddd; padding: 8px; cursor: pointer; 
+      border-radius: 5px; background: #f9f9f9; transition: all 0.2s; 
+  }
+  .carta-opcio:hover { border-color: var(--accent); transform: scale(1.02); }
+  .carta-opcio img { width: 100%; height: 180px; object-fit: contain; background: white; border-radius: 3px; }
+  
+  .carta-opcio.seleccionat { border-color: #28a745; background: #e8f5e9; }
 </style>
 </head>
 
@@ -401,8 +422,12 @@
   <div class="left">
     <div class="controls">
       <select id="deck"></select>
-      <button id="btnNew" type="button">Nova carta</button>
-      <button id="btnClear" type="button">Neteja pissarra</button>
+      <button id="btnNew" type="button" title="Tria carta a l'atzar">🎲 Atzar</button>
+      <button id="btnPick" type="button" class="btn-pick" title="Tria carta manualment">🔍 Escull</button>
+    </div>
+    
+    <div style="margin-bottom:10px;">
+        <button id="btnClear" type="button" style="width:100%; background: #dc3545; color:white;">🗑️ Neteja pissarra</button>
     </div>
 
     <div class="cardStage" id="cardStage">
@@ -477,8 +502,18 @@
       <img src="https://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-nc-sa.png" alt="CC BY-NC-SA" style="height: 31px; margin-top: 10px;">
   </div>
 
-</div> <script>
-/* El teu script original es manté intacte per sota */
+</div>
+
+<div id="modalCartes" class="modal-overlay" onclick="tancarSiFora(event, 'modalCartes')">
+    <div class="modal-contingut">
+        <h2 style="margin-top:0;">🔍 Tria una carta</h2>
+        <p style="font-size: 14px; color: #666; margin-top: -10px;">Fes clic a la carta que vulguis utilitzar per posar-la a l'aparador.</p>
+        <div class="modal-graella" id="galeria-cartes"></div>
+        <button onclick="tancarModal('modalCartes')" style="margin-top:30px; background:#666; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Tancar finestra</button>
+    </div>
+</div>
+
+<script>
 /* ===== Config estructurada ===== */
 const ROWS = ["bateria","teclat","veu","baix","guitarra"]
 const PRESENCE_PROB = 0.55
@@ -515,7 +550,14 @@ function getMode(){
 }
 
 async function init(){
-  MANIFEST = await (await fetch("manifest.json")).json()
+  try {
+      const resp = await fetch("manifest.json");
+      MANIFEST = await resp.json();
+  } catch(e) {
+      console.error(e);
+      alert("Error: No s'ha pogut carregar el 'manifest.json'. Comprova que l'arxiu existeix i que estàs executant un servidor local, o que GitHub Pages ha acabat de desplegar els canvis.");
+      return;
+  }
 
   const select = document.getElementById("deck")
   Object.keys(MANIFEST).forEach(b=>{
@@ -528,11 +570,12 @@ async function init(){
   select.addEventListener("change", carregarBaralla)
 
   document.getElementById("btnNew").addEventListener("click", novaCarta)
+  document.getElementById("btnPick").addEventListener("click", obrirModalCartes)
   document.getElementById("btnClear").addEventListener("click", clearBoard)
   document.getElementById("mode").addEventListener("change", applyMode)
 
   document.addEventListener("keydown", e=>{
-    if(e.key==="Enter") novaCarta()
+    if(e.key==="Enter" && document.getElementById("modalCartes").style.display !== "flex") novaCarta()
   })
 
   document.getElementById("zoomIn").addEventListener("click", ()=> setZoom(zoom + ZOOM_STEP))
@@ -566,7 +609,7 @@ async function init(){
     addThumbToContainer(freeOverlay, path, x, y, "150px")
   })
 
-  // drop structuredWrap (robust) + ✅ magnetisme columnes
+  // drop structuredWrap (robust) + magnetisme columnes
   const structuredWrap = document.getElementById("structuredWrap")
   structuredWrap.addEventListener("dragover", e=>{
     if(getMode()!=="structured") return
@@ -625,9 +668,10 @@ function applyMode(){
   }
 }
 
-/* ===== Carta gran ===== */
+/* ===== Carta gran i Modal ===== */
 function carregarBaralla(){
   const deck = document.getElementById("deck").value
+  if(!deck || !MANIFEST[deck]) return;
   barallaActual = [...MANIFEST[deck]]
   barallaRestant = shuffle([...barallaActual])
   novaCarta()
@@ -636,20 +680,67 @@ function carregarBaralla(){
 function setMainImg(path){
   const img=document.getElementById("imgTop")
   const url=new URL(path, window.location.href)
-  url.searchParams.set("t", Date.now())
+  
+  // Evitem trencament si s'obra en local amb l'arxiu directament (file:///)
+  if (window.location.protocol !== 'file:') {
+      url.searchParams.set("t", Date.now())
+  }
+  
   img.src=url.toString()
-}
-
-function novaCarta(){
-  if(barallaRestant.length===0) barallaRestant = shuffle([...barallaActual])
-  currentPath = barallaRestant.pop()
-  setMainImg(currentPath)
-
+  currentPath = path
+  
+  // Animació visual
   const stage=document.getElementById("cardStage")
   stage.classList.remove("animate")
   void stage.offsetWidth
   stage.classList.add("animate")
 }
+
+function novaCarta(){
+  if(!barallaActual || barallaActual.length === 0) return;
+  if(barallaRestant.length===0) barallaRestant = shuffle([...barallaActual])
+  const path = barallaRestant.pop()
+  setMainImg(path)
+}
+
+function obrirModalCartes() {
+    const cont = document.getElementById('galeria-cartes')
+    cont.innerHTML = ''
+    
+    if(!barallaActual || barallaActual.length === 0) {
+        cont.innerHTML = "<p>No hi ha cartes en aquesta baralla.</p>";
+    }
+    
+    // Mostrem totes les cartes de la baralla seleccionada actualment
+    barallaActual.forEach(path => {
+        const d = document.createElement('div')
+        d.className = 'carta-opcio'
+        
+        // Nom net per mostrar a sota de l'imatge
+        const nomNet = path.split('/').pop().replace('.png', '').replace('.jpg', '')
+        
+        const url=new URL(path, window.location.href)
+        if (window.location.protocol !== 'file:') {
+            url.searchParams.set("t", Date.now())
+        }
+        
+        d.innerHTML = `<img src="${url.toString()}" alt="${nomNet}"><div style="margin-top:5px; font-size:12px;">${nomNet}</div>`
+        
+        if(path === currentPath) d.classList.add('seleccionat')
+        
+        d.onclick = () => {
+            setMainImg(path)
+            tancarModal('modalCartes')
+        }
+        
+        cont.appendChild(d)
+    })
+    
+    document.getElementById('modalCartes').style.display = 'flex'
+}
+
+function tancarModal(id) { document.getElementById(id).style.display = 'none'; }
+function tancarSiFora(e, id) { if (e.target.id === id) tancarModal(id); }
 
 /* ===== Thumbs ===== */
 function createThumb(path, widthCss){
@@ -659,7 +750,9 @@ function createThumb(path, widthCss){
 
   const img=document.createElement("img")
   const url=new URL(path, window.location.href)
-  url.searchParams.set("t", Date.now())
+  if (window.location.protocol !== 'file:') {
+      url.searchParams.set("t", Date.now())
+  }
   img.src=url.toString()
 
   const handle=document.createElement("div")
@@ -675,7 +768,7 @@ function createThumb(path, widthCss){
   makeMovable(t)
   makeResizable(t, handle)
 
-  // ✅ magnetisme mentre mous (només en structured)
+  // magnetisme mentre mous (només en structured)
   t.addEventListener("pointerup", ()=>{
     if(getMode()!=="structured") return
     // només snap si està dins structuredOverlay
@@ -770,7 +863,7 @@ function makeResizable(el, handle){
   })
 }
 
-/* ===== ✅ Magnetisme: snap X a la columna més propera ===== */
+/* ===== Magnetisme: snap X a la columna més propera ===== */
 function snapXToNearestColumn(xInStructured){
   const structuredWrap = document.getElementById("structuredWrap")
   const matrix = document.getElementById("matrix")
@@ -779,10 +872,8 @@ function snapXToNearestColumn(xInStructured){
 
   const wrapRect = structuredWrap.getBoundingClientRect()
 
-  // Convertim xInStructured (coords locals) a x en pantalla (per comparar amb rects)
   const xScreen = wrapRect.left + (xInStructured * zoom)
 
-  // Trobar columna més propera (per centre)
   let best = null
   let bestDist = Infinity
 
@@ -797,14 +888,11 @@ function snapXToNearestColumn(xInStructured){
   }
   if(!best) return xInStructured
 
-  // Ens volem posar dins la columna, cap a la dreta (zona lliure)
   const laneRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--lane-x")) || 0.66
   const targetScreenX = best.left + (best.width * laneRatio)
 
-  // Tornem a coords locals del structuredWrap (sense zoom)
   const targetLocal = (targetScreenX - wrapRect.left) / zoom
 
-  // Clampegem perquè quedi dins la columna (amb marge)
   const leftLocal = (best.left - wrapRect.left) / zoom
   const rightLocal = (best.right - wrapRect.left) / zoom
   const margin = 10
@@ -866,7 +954,9 @@ function buildProposal(){
       if(show){
         const img = document.createElement("img")
         const url = new URL(cardMap[rowKey], window.location.href)
-        url.searchParams.set("t", Date.now())
+        if (window.location.protocol !== 'file:') {
+            url.searchParams.set("t", Date.now())
+        }
         img.src = url.toString()
         img.alt = rowKey
         slot.appendChild(img)
@@ -880,7 +970,7 @@ function buildProposal(){
   }
 }
 
-/* ===== Export PNG (sense deformació pel zoom) ===== */
+/* ===== Export PNG ===== */
 async function exportPNG(){
   const mode = getMode()
   const targetId = (mode === "free") ? "freeCanvas" : "structuredWrap"
