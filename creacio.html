@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Rockin · Creació</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=7"></script>
+<script src="dades.js?v=9"></script>
 <style>
   :root{
     --bg:#f6f7f9; --text:#222; --muted:#6b6f76; --accent:#ffcc00; --accent-dark:#e6b800;
@@ -89,6 +89,25 @@
   .addCol{ width:60px; height:78px; border-radius:12px; border:2px dashed var(--border); background:#fff; font-size:24px; color:#999; }
   .addCol:hover{ border-color:var(--accent); color:#222; background:#fff; }
 
+  /* ===== MESCLADOR ===== */
+  .mixer{ display:flex; gap:10px; overflow-x:auto; padding:4px 2px 8px; }
+  .strip{ width:96px; flex:0 0 auto; background:#f7f8fa; border:1px solid var(--border); border-radius:14px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .strip.master{ background:#fff8d6; }
+  .strip.off{ opacity:.55; }
+  .strip img{ height:44px; border-radius:6px; }
+  .strip .nm{ font-size:12px; font-weight:700; }
+  .strip .fad{ display:flex; gap:8px; align-items:stretch; height:170px; }
+  .strip input.vfader{ writing-mode:vertical-lr; direction:rtl; width:26px; height:170px; accent-color:#222; cursor:pointer; }
+  .strip .meter{ width:10px; height:170px; border-radius:5px; background:#e6e8ec; position:relative; overflow:hidden; }
+  .strip .meter i{ position:absolute; left:0; right:0; bottom:0; height:0%; background:linear-gradient(to top,#3fb4ff 0%,#79cf5a 55%,#ffcc00 80%,#dc3545 100%); background-size:100% 170px; background-position:bottom; transition:height .05s linear; }
+  .strip .val{ font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .strip .panw{ width:100%; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--muted); }
+  .strip .panw input{ width:78px; }
+  .strip .ms2{ display:flex; gap:5px; }
+  .strip .ms2 button{ width:30px; height:26px; padding:0; border-radius:8px; font-size:12px; font-weight:800; background:#fff; border:1px solid var(--border); color:#555; }
+  .strip .ms2 button.on.mute{ background:#dc3545; color:#fff; border-color:transparent; }
+  .strip .ms2 button.on.solo{ background:#ffcc00; color:#222; border-color:transparent; }
+
   /* ===== TRANSPORT ===== */
   .transport{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--border); box-shadow:0 -8px 24px rgba(0,0,0,.08); padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; z-index:50; }
   .transport .play{ width:56px; height:56px; border-radius:999px; font-size:22px; padding:0; }
@@ -170,7 +189,14 @@
     <input type="file" id="fileLoad" accept="application/json" style="display:none">
   </div>
   <div class="gridWrap" id="gridWrap"><div class="grid" id="grid"></div></div>
-  <p class="hint">Clica una casella per triar la carta (o deixar-la en silenci). Clica el nom d'una secció per canviar-lo, el <b>×N</b> per repetir la roda i els <b>acords</b> per donar a aquesta part una roda diferent. Teclat, guitarra i baix poden tocar un <b>patró rítmic</b> (l'acord sencer) o un <b>contorn melòdic</b> (arpegi amb notes de l'acord). El <b>▶</b> de cada part hi salta mentre sona (o tecles 1–9). Clica la icona d'un instrument per sentir-lo sol; <b>M</b> silencia una pista i <b>S</b> la deixa en solo.</p>
+  <p class="hint">Clica una casella per triar la carta (o deixar-la en silenci). Clica el nom d'una secció per canviar-lo, el <b>×N</b> per repetir la roda i els <b>acords</b> per donar a aquesta part una roda diferent. Teclat, guitarra i baix poden tocar un <b>patró rítmic</b> (l'acord sencer) o un <b>contorn melòdic</b> (arpegi amb notes de l'acord). El <b>▶</b> de cada part hi salta mentre sona (o tecles 1–9). Clica la icona d'un instrument per sentir-lo sol; <b>M</b> silencia una pista i <b>S</b> la deixa en solo (també al mesclador).</p>
+</div>
+
+<!-- ============ 3. MESCLADOR ============ -->
+<div class="panel">
+  <h2><span class="num">3</span> Mesclador <button class="ghost" id="mixReset" style="margin-left:auto;font-size:12px;padding:5px 10px">Restableix</button></h2>
+  <div class="mixer" id="mixer"></div>
+  <p class="hint">Puja o baixa el volum de cada instrument, gira el <b>panorama</b> (esquerra–dreta) i silencia (<b>M</b>) o deixa sol (<b>S</b>) qualsevol pista. Els canvis se senten a l'instant i es guarden amb la cançó.</p>
 </div>
 
 <div class="footer">Eina sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank">CC BY-NC-SA 4.0</a> · Rockin</div>
@@ -226,8 +252,9 @@ let solo = { bateria:false, teclat:false, veu:false, baix:false, guitarra:false 
 // una fila sona si no està silenciada i (no hi ha cap solo, o ella és solo)
 function rowSilent(id){ const anySolo = Object.values(solo).some(Boolean); return muted[id] || (anySolo && !solo[id]); }
 
+function defaultMix(){ return { master:{vol:80}, bateria:{vol:80,pan:0}, teclat:{vol:80,pan:-0.3}, baix:{vol:80,pan:0}, guitarra:{vol:80,pan:0.3} }; }
 function defaultSong(){
-  return { metrica:"binari", bpm:100, key:"C", prog:"I V vi IV", cols:[] };
+  return { metrica:"binari", bpm:100, key:"C", prog:"I V vi IV", cols:[], mix:defaultMix() };
 }
 function newCol(sec){ return { sec: sec || "Estrofa", rep:1, prog:null, cells:{} }; }
 
@@ -285,11 +312,31 @@ function colChords(col){ const c = parseProg(colProgStr(col), song.key); return 
    MOTOR DE SO (Web Audio, tot sintetitzat)
    ============================================================ */
 let AC=null, master=null, noiseBuf=null;
+/* ---------- Mesclador: cada instrument té el seu canal (volum → panorama → mesurador) cap al màster ---------- */
+let curRow=null;                 // instrument que s'està programant ara mateix
+const BUS={};                    // canals creats per a l'AC actual
+function bus(id){
+  if(BUS[id] && BUS[id].ac===AC) return BUS[id];
+  const g=AC.createGain(), pan=AC.createStereoPanner(), an=AC.createAnalyser();
+  an.fftSize=512; g.connect(pan); pan.connect(an); an.connect(master);
+  BUS[id]={ac:AC, g, pan, an, buf:new Float32Array(512)};
+  applyMix(id); return BUS[id];
+}
+function OUT(){ return curRow ? bus(curRow).g : master; }
+const volToGain = v => Math.pow(v/80, 2);   // 80 = volum normal; 100 ≈ +4 dB
+function applyMix(id){
+  const b=BUS[id]; if(!b || b.ac!==AC) return;
+  const m=song.mix[id] || {vol:80,pan:0};
+  const target = rowSilent(id) ? 0 : volToGain(m.vol);
+  b.g.gain.setTargetAtTime(target, AC.currentTime, 0.015);
+  b.pan.pan.setTargetAtTime(m.pan, AC.currentTime, 0.015);
+}
+function applyAllMix(){ if(!AC) return; ROWS.forEach(r=>applyMix(r.id)); if(master) master.gain.setTargetAtTime(volToGain(song.mix.master.vol)*0.8, AC.currentTime, 0.015); }
 function audio(){
   if(AC) return AC;
   AC = new (window.AudioContext||window.webkitAudioContext)();
   const comp = AC.createDynamicsCompressor(); comp.threshold.value=-12; comp.ratio.value=4;
-  master = AC.createGain(); master.gain.value = (+document.getElementById("vol").value)/100;
+  master = AC.createGain(); master.gain.value = volToGain(song.mix.master.vol)*0.8;
   master.connect(comp); comp.connect(AC.destination);
   noiseBuf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
   const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
@@ -307,17 +354,17 @@ function noise(t, dur, filterType, freq, q, gain, decay){
   const s = AC.createBufferSource(); s.buffer=noiseBuf;
   const f = AC.createBiquadFilter(); f.type=filterType; f.frequency.value=freq; f.Q.value=q||1;
   const g = AC.createGain(); g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(0.0001,t+decay);
-  s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+decay+0.05);
+  s.connect(f); f.connect(g); g.connect(OUT()); s.start(t); s.stop(t+decay+0.05);
 }
 const DRUM = {
   kk(t,v=1){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine";
     o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12);
     g.gain.setValueAtTime(1.1*v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.45);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t+0.5);
+    o.connect(g); g.connect(OUT()); o.start(t); o.stop(t+0.5);
     noise(t,0.03,"lowpass",900,1,0.5*v,0.03); },
   sn(t,v=1){ noise(t,0.2,"bandpass",1900,0.7,0.9*v,0.22); noise(t,0.2,"highpass",4000,1,0.35*v,0.12);
     const o=AC.createOscillator(), g=AC.createGain(); o.type="triangle"; o.frequency.setValueAtTime(230,t); o.frequency.exponentialRampToValueAtTime(150,t+0.08);
-    g.gain.setValueAtTime(0.5*v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.15); o.connect(g); g.connect(master); o.start(t); o.stop(t+0.2); },
+    g.gain.setValueAtTime(0.5*v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.15); o.connect(g); g.connect(OUT()); o.start(t); o.stop(t+0.2); },
   ghost(t){ DRUM.sn(t,0.28); },
   hh(t,v=1){ noise(t,0.06,"highpass",7500,1,0.35*v,0.06); },
   oh(t){ noise(t,0.4,"highpass",6500,1,0.35,0.4); },
@@ -328,15 +375,16 @@ const DRUM = {
 };
 function tom(t,f){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine";
   o.frequency.setValueAtTime(f*1.4,t); o.frequency.exponentialRampToValueAtTime(f,t+0.1);
-  g.gain.setValueAtTime(0.9,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.4); o.connect(g); g.connect(master); o.start(t); o.stop(t+0.45); noise(t,0.05,"lowpass",1500,1,0.3,0.05); }
+  g.gain.setValueAtTime(0.9,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.4); o.connect(g); g.connect(OUT()); o.start(t); o.stop(t+0.45); noise(t,0.05,"lowpass",1500,1,0.3,0.05); }
 
 function bassNote(t, midi, dur){
   const o=AC.createOscillator(), o2=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain();
   o.type="sawtooth"; o2.type="sine"; o.frequency.value=mtof(midi); o2.frequency.value=mtof(midi);
-  f.type="lowpass"; f.frequency.setValueAtTime(900,t); f.frequency.exponentialRampToValueAtTime(250,t+0.25); f.Q.value=2;
+  // filtre una mica més obert: els harmònics fan que el baix se senti també en altaveus petits (portàtil, projector)
+  f.type="lowpass"; f.frequency.setValueAtTime(1400,t); f.frequency.exponentialRampToValueAtTime(420,t+0.25); f.Q.value=2;
   const end=t+Math.max(0.12,dur*0.92);
   env(g,t,0.008,0.42,0.15,0.26,0.06,end);
-  o.connect(f); o2.connect(f); f.connect(g); g.connect(master); o.start(t); o2.start(t); o.stop(end+0.15); o2.stop(end+0.15);
+  o.connect(f); o2.connect(f); f.connect(g); g.connect(OUT()); o.start(t); o2.start(t); o.stop(end+0.15); o2.stop(end+0.15);
 }
 // Guitarra: corda pinçada (algorisme Karplus-Strong). Es genera una mostra per nota i es guarda.
 const KS = new Map();
@@ -362,7 +410,7 @@ function pluckBuffer(midi){
 // Guitarra elèctrica: cordes pinçades → ampli amb una mica de distorsió (crunch) → "caixa" de l'ampli
 let gtrBus=null, gtrBusAC=null;
 function guitarBus(){
-  if(gtrBus && gtrBusAC===AC) return gtrBus;
+  if(gtrBus && gtrBusAC===AC && BUS.guitarra && BUS.guitarra.ac===AC) return gtrBus;
   const inp = AC.createGain(); inp.gain.value = 1;
   const pre = AC.createBiquadFilter(); pre.type="highpass"; pre.frequency.value=110;
   const drive = AC.createGain(); drive.gain.value = 4.5;
@@ -373,7 +421,7 @@ function guitarBus(){
   const cab = AC.createBiquadFilter(); cab.type="lowpass"; cab.frequency.value=4200; cab.Q.value=0.7;
   const cab2 = AC.createBiquadFilter(); cab2.type="lowpass"; cab2.frequency.value=6000;
   const out = AC.createGain(); out.gain.value = 0.22;
-  inp.connect(pre); pre.connect(drive); drive.connect(shaper); shaper.connect(mid); mid.connect(cab); cab.connect(cab2); cab2.connect(out); out.connect(master);
+  inp.connect(pre); pre.connect(drive); drive.connect(shaper); shaper.connect(mid); mid.connect(cab); cab.connect(cab2); cab2.connect(out); out.connect(bus("guitarra").g);
   gtrBus=inp; gtrBusAC=AC; return inp;
 }
 function pluck(t, midi, dur, gain){
@@ -397,7 +445,7 @@ function keysNote(t, m, dur, gain){
   body.type="sine"; body.frequency.value=f0*2; bodyG.gain.value=0.18;
   const g = AC.createGain();
   env(g, t, 0.004, gain, 0.9, gain*0.35, 0.25, end);
-  car.connect(g); body.connect(bodyG); bodyG.connect(g); g.connect(master);
+  car.connect(g); body.connect(bodyG); bodyG.connect(g); g.connect(OUT());
   [car,mod,body].forEach(o=>{ o.start(t); o.stop(end+0.4); });
 }
 function keysChord(t, midis, dur){ midis.forEach(m=>keysNote(t, m, dur, 0.24)); }
@@ -433,7 +481,7 @@ const isMelodic = card => !!(card && card.contour);
 const isStrum = card => !!(card && card.strum);
 // Una carta encaixa amb la mètrica? (binari: cartes mb + rascats; ternari: cartes mt). Els contorns melòdics no tenen mètrica.
 function fitsMetre(card){
-  if(!card || isMelodic(card)) return true;
+  if(!card || isMelodic(card) || card.id==="veu") return true;
   if(card.grid) return song.metrica==="ternari" ? card.grid===12 : card.grid!==12;   // bateria
   if(song.metrica==="ternari") return !isStrum(card) && D.TERNARI.includes(card);
   return isStrum(card) || D.BINARI.includes(card);
@@ -461,13 +509,15 @@ function playStrum(card, t0, beat, ch, rGuit){
   });
 }
 
-function scheduleBar(ev, t0){
+function scheduleBar(ev, t0){ try{ scheduleBarInner(ev,t0); } finally { curRow=null; } }
+function scheduleBarInner(ev, t0){
   const col = song.cols[ev.ci], bd = barDur(), beat = 60/song.bpm, bpb = beatsPerBar();
   const ch = ev.chord;
   ROWS.forEach(row=>{
-    if(row.nomesVisual || rowSilent(row.id)) return;
+    if(row.nomesVisual) return;
     const id = col.cells[row.id]; if(!id) return;
     const card = findCard(row,id); if(!card) return;
+    curRow = row.id;
     if(row.id==="bateria"){
       const step = (4*beat)/card.grid;          // les cartes de bateria són de 4 temps
       const maxPos = card.grid;
@@ -477,7 +527,7 @@ function scheduleBar(ev, t0){
       return;
     }
     const rootMidi = ch.root;
-    const rBaix = 36 + rootMidi;                       // octava 2
+    const rBaix = 28 + ((rootMidi - 4 + 12) % 12);     // registre real del baix elèctric: fonamental entre Mi1 i Re#2
     const rGuit = 52 + ((rootMidi - 4 + 12) % 12);     // entre E3 i D#4
     const rTecl = 53 + ((rootMidi - 5 + 12) % 12);     // entre F3 i E4
     if(isStrum(card)){ playStrum(card, t0, beat, ch, rGuit); return; }
@@ -622,9 +672,9 @@ function renderGrid(){
     if(!row.nomesVisual){
       const ms = document.createElement("div"); ms.className="ms";
       const m = document.createElement("button"); m.className="mute"+(muted[row.id]?" on":""); m.title="Mute: silencia aquesta pista"; m.textContent="M";
-      m.onclick = ()=>{ muted[row.id]=!muted[row.id]; renderGrid(); };
+      m.onclick = ()=>{ muted[row.id]=!muted[row.id]; renderGrid(); renderMixer(); applyAllMix(); };
       const so = document.createElement("button"); so.className="solo"+(solo[row.id]?" on":""); so.title="Solo: només sona aquesta pista (es poden combinar)"; so.textContent="S";
-      so.onclick = ()=>{ solo[row.id]=!solo[row.id]; renderGrid(); };
+      so.onclick = ()=>{ solo[row.id]=!solo[row.id]; renderGrid(); renderMixer(); applyAllMix(); };
       ms.appendChild(m); ms.appendChild(so); h.appendChild(ms);
     }
     g.appendChild(h);
@@ -695,12 +745,65 @@ function addColumn(){
 
 async function previewRow(row){
   audio(); if(AC.state!=="running"){ try{ await AC.resume(); }catch(e){} }
+  curRow = row.id; setTimeout(()=>{ curRow=null; },0);
   const t = AC.currentTime+0.05, ch = parseChord("I", song.key), beat = 60/song.bpm;
   if(row.id==="bateria"){ const c = D.BATERIA[0]; const step=beat/4; ["hh","sn","kk"].forEach(k=>(c[k]||[]).forEach(p=>DRUM[k](t+p*step))); }
-  else if(row.id==="baix"){ [0,1,2,3].forEach(i=>bassNote(t+i*beat, 36+ch.root, beat)); }
+  else if(row.id==="baix"){ [0,1,2,3].forEach(i=>bassNote(t+i*beat, 28+((ch.root-4+12)%12), beat)); }
   else if(row.id==="guitarra"){ const r=52+((ch.root-4+12)%12); [0,1,2,3].forEach(i=>guitarStrum(t+i*beat, [r,r+7,r+12,r+16], beat)); }
   else if(row.id==="teclat"){ const r=53+((ch.root-5+12)%12); [0,1,2,3].forEach(i=>keysChord(t+i*beat, ch.tones.map(x=>r+x), beat)); }
 }
+
+/* ---------- mesclador (interfície) ---------- */
+const MIXROWS = () => ROWS.filter(r=>!r.nomesVisual);
+function panLabel(p){ return Math.abs(p)<0.05 ? "C" : (p<0?"E ":"D ")+Math.round(Math.abs(p)*100); }
+function renderMixer(){
+  const box=$("mixer"); if(!box) return; box.innerHTML="";
+  MIXROWS().forEach(row=>{
+    const m=song.mix[row.id];
+    const st=document.createElement("div"); st.className="strip"+(rowSilent(row.id)?" off":"");
+    st.innerHTML=`<img src="${row.img}" alt="" title="Clica per sentir-lo sol"><div class="nm">${row.nom}</div>
+      <div class="fad"><input class="vfader" type="range" min="0" max="100" value="${m.vol}" title="Volum"><div class="meter"><i></i></div></div>
+      <div class="val">${m.vol}</div>
+      <div class="panw"><input type="range" min="-100" max="100" step="5" value="${Math.round(m.pan*100)}" title="Panorama (doble clic = centre)"><span>${panLabel(m.pan)}</span></div>
+      <div class="ms2"><button class="mute${muted[row.id]?' on':''}" title="Mute">M</button><button class="solo${solo[row.id]?' on':''}" title="Solo">S</button></div>`;
+    st.querySelector("img").onclick=()=>previewRow(row);
+    const vf=st.querySelector(".vfader"), vl=st.querySelector(".val");
+    vf.oninput=()=>{ m.vol=+vf.value; vl.textContent=m.vol; applyMix(row.id); };
+    vf.onchange=saveLocal;
+    const pn=st.querySelector(".panw input"), pl=st.querySelector(".panw span");
+    pn.oninput=()=>{ m.pan=+pn.value/100; pl.textContent=panLabel(m.pan); applyMix(row.id); };
+    pn.onchange=saveLocal;
+    pn.ondblclick=()=>{ pn.value=0; pn.oninput(); saveLocal(); };
+    st.querySelector(".mute").onclick=()=>{ muted[row.id]=!muted[row.id]; renderGrid(); renderMixer(); applyAllMix(); };
+    st.querySelector(".solo").onclick=()=>{ solo[row.id]=!solo[row.id]; renderGrid(); renderMixer(); applyAllMix(); };
+    st.dataset.row=row.id; box.appendChild(st);
+  });
+  const ms=document.createElement("div"); ms.className="strip master";
+  ms.innerHTML=`<div style="height:44px;display:grid;place-items:center;font-size:28px">🎚️</div><div class="nm">Màster</div>
+    <div class="fad"><input class="vfader" type="range" min="0" max="100" value="${song.mix.master.vol}" title="Volum general"><div class="meter"><i></i></div></div>
+    <div class="val">${song.mix.master.vol}</div>`;
+  const mf=ms.querySelector(".vfader"), mv=ms.querySelector(".val");
+  mf.oninput=()=>{ song.mix.master.vol=+mf.value; mv.textContent=mf.value; $("vol").value=mf.value; applyAllMix(); };
+  mf.onchange=saveLocal;
+  ms.dataset.row="master"; box.appendChild(ms);
+  $("vol").value = song.mix.master.vol;
+}
+// mesuradors de nivell
+let masterAn=null;
+function meterLoop(){
+  requestAnimationFrame(meterLoop);
+  if(!AC || AC.state!=="running" || typeof AC.createAnalyser!=="function") return;
+  if(!masterAn || masterAn.context!==AC){ masterAn=AC.createAnalyser(); masterAn.fftSize=512; master.connect(masterAn); masterAn._buf=new Float32Array(512); }
+  document.querySelectorAll("#mixer .strip").forEach(st=>{
+    const id=st.dataset.row; let an, buf;
+    if(id==="master"){ an=masterAn; buf=masterAn._buf; } else { const b=BUS[id]; if(!b||b.ac!==AC) return; an=b.an; buf=b.buf; }
+    an.getFloatTimeDomainData(buf); let pk=0; for(let i=0;i<buf.length;i++){ const v=Math.abs(buf[i]); if(v>pk) pk=v; }
+    const db = pk>0 ? 20*Math.log10(pk) : -90, h = Math.max(0, Math.min(100, (db+48)/48*100));
+    const bar=st.querySelector(".meter i"); const prev=parseFloat(bar.style.height)||0;
+    bar.style.height = (h>prev ? h : Math.max(h, prev-3)) + "%";
+  });
+}
+function saveLocal(){ try{ localStorage.setItem("rockin-creacio", JSON.stringify(song)); }catch(e){} }
 
 /* ---------- atzar ---------- */
 const rnd = a => a[Math.floor(Math.random()*a.length)];
@@ -828,7 +931,8 @@ function closeModals(){ document.querySelectorAll(".modal").forEach(m=>m.classLi
 
 /* ---------- persistència ---------- */
 function changed(){
-  renderMarc(); renderGrid();
+  adaptToMetre();   // garanteix que mai hi hagi cartes d'una altra mètrica a la graella
+  renderMarc(); renderGrid(); renderMixer(); applyAllMix();
   try{ localStorage.setItem("rockin-creacio", JSON.stringify(song)); }catch(e){}
   if(playing){ buildTimeline(); if(nextIdx>=timeline.length) nextIdx=0; }
 }
@@ -837,6 +941,7 @@ function decodeSong(s){ s=s.replace(/-/g,"+").replace(/_/g,"/"); return JSON.par
 function loadSong(obj){
   if(!obj || !Array.isArray(obj.cols)) throw new Error("Format desconegut");
   song = Object.assign(defaultSong(), obj);
+  song.mix = Object.assign(defaultMix(), obj.mix||{});
   song.cols = song.cols.map(c=>Object.assign(newCol(), c));
   // neteja: treu cartes que no pertanyen a la fila (p. ex. d'una versió anterior de l'app)
   song.cols.forEach(c=>ROWS.forEach(r=>{ if(c.cells[r.id] && !findCard(r, c.cells[r.id])) delete c.cells[r.id]; }));
@@ -858,11 +963,14 @@ function init(){
   $("progCustom").onchange = ()=>changed();
 
   $("btnRandom").onclick = randomSong;
+  $("mixReset").onclick = ()=>{ song.mix=defaultMix(); Object.keys(muted).forEach(k=>muted[k]=false); Object.keys(solo).forEach(k=>solo[k]=false); renderGrid(); renderMixer(); applyAllMix(); saveLocal(); };
+  requestAnimationFrame(meterLoop);
   $("btnRandomFill").onclick = ()=>{ if(!song.cols.length) addColumn(); song.cols.forEach(c=>randomizeColumn(c,false)); changed(); };
   $("btnAddCol").onclick = addColumn;
   $("btnClear").onclick = ()=>{ if(confirm("Buidar tota la graella?")){ song.cols=[]; changed(); } };
   $("btnPlay").onclick = ()=> playing ? stop() : play();
-  $("vol").oninput = e=>{ if(master) master.gain.value=(+e.target.value)/100; };
+  $("vol").oninput = e=>{ song.mix.master.vol=+e.target.value; applyAllMix(); renderMixer(); };
+  $("vol").onchange = ()=>saveLocal();
   document.addEventListener("keydown", e=>{ if(/^Digit[1-9]$/.test(e.code) && !["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName) && !document.querySelector(".modal.open")){ const ci=+e.code.slice(5)-1; if(ci<song.cols.length) jumpTo(ci); }
     if(e.code==="Space" && !["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName) && !document.querySelector(".modal.open")){ e.preventDefault(); playing?stop():play(); } if(e.key==="Escape") closeModals(); });
 

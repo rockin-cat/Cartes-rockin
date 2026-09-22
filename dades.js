@@ -67,17 +67,19 @@ window.ROCKIN_DADES = (function () {
     R("mb1", "Binari", "Q Q Q Q"), R("mb2", "Binari", "Q Q R Q"), R("mb3", "Binari", "Q R Q Q"),
     R("mb4", "Binari", "Q Q Q R"), R("mb5", "Binari", "W"), R("mb6", "Binari", "Q H2 Q"),
     R("mb7", "Binari", "Q R Q R"), R("mb8", "Binari", "Q Q R R"), R("mb9", "Binari", "R Q R Q"),
-    R("mb10", "Binari", "Q R Q R"), R("mb11", "Binari", "Q Q Q EE"), R("mb12", "Binari", "xE EE xE EE"),
+    R("mb10", "Binari", "Q R Q R"), R("mb11", "Binari", "Q Q Q xE"), R("mb12", "Binari", "xE EE xE EE"),
     R("mb13", "Binari", "EE EE EE EE"), R("mb14", "Binari", "R EE R EE"), R("mb15", "Binari", "Q EE R R"),
     R("mb16", "Binari", "Q EE EE R"), R("mb17", "Binari", "EE Q EE EE"), R("mb18", "Binari", "Q Q EE Q"),
-    R("mb19", "Binari", "xE Q Q Q"), R("mb20", "Binari", "xE Q Q R"), R("mb21", "Binari", "xE Ex xE Ex"),
+    R("mb19", "Binari", "xE Q Q Q"), R("mb20", "Binari", "xE Q Q R"), R("mb21", "Binari", "xE xE xE xE"),
     R("mb22", "Binari", "Q xE Q Q"), R("mb23", "Binari", "Q xE Q R"), R("mb24", "Binari", "Q xE Q xE"),
     R("mb25", "Binari", "SSSS SSSS SSSS SSSS"), R("mb26", "Binari", "ESS ESS ESS ESS"),
     R("mb27", "Binari", "SSE SSE SSE SSE"), R("mb28", "Binari", "SES SES SES SES"),
     R("mb29", "Binari", "E.S E.S E.S E.S"), R("mb30", "Binari", "SE. SE. SE. SE."),
   ];
 
-  // ------------------------------ TERNARI (3/4) -----------------------------
+  // ------------------------------ TERNARI (12/8) ----------------------------
+  // Cada carta descriu UN pols dividit en 3 micropolsos (una unitat = un micropols).
+  // L'app la repeteix als 4 polsos del compàs.
   const TERNARI = [
     R("mt1", "Ternari", "Q Q Q"), R("mt2", "Ternari", "Q Q R"), R("mt3", "Ternari", "Q R Q"),
     R("mt4", "Ternari", "R Q Q"), R("mt5", "Ternari", "Q R R"), R("mt6", "Ternari", "R R Q"),
@@ -87,13 +89,20 @@ window.ROCKIN_DADES = (function () {
     R("mt16", "Ternari", "R EE R"), R("mt17", "Ternari", "Q EE R"), R("mt18", "Ternari", "Q EE EE"),
     R("mt19", "Ternari", "EE Q EE"), R("mt20", "Ternari", "EE Q Q"), R("mt21", "Ternari", "Q Q EE"),
     R("mt22", "Ternari", "xE xE xE"), R("mt23", "Ternari", "Q xE Q"), R("mt24", "Ternari", "xE Q R"),
-    R("mt25", "Ternari", "xE Q xE"), R("mt26", "Ternari", "SES SES SES"),
-    R("mt27", "Ternari", "E.S E.S E.S"), R("mt28", "Ternari", "SE. SE. SE."),
-    R("mt29", "Ternari", "Q Q Q"), R("mt30", "Ternari", "TTT TTT TTT"),
-    R("mt31", "Ternari", "T21 T21 T21"), R("mt32", "Ternari", "T12 T12 T12"),
-    // 6/8 (dues pulsacions de negra amb punt = 3 negres, encaixa al compàs ternari)
-    R("mt33", "Ternari", "D D"), R("mt34", "Ternari", "ee3 ee3"),
-    R("mt35", "Ternari", "eq eq"), R("mt36", "Ternari", "qe qe"),
+    R("mt25", "Ternari", "xE Q xE"),
+    // Cartes amb cercles partits en tres: cada cercle és un pols dividit en 3 micropolsos
+    // (tots els cercles de la carta són iguals, així que la carta defineix com es divideix cada pols).
+    R("mt26", "Ternari", "Q Q Q"),   // 4 cercles · 3 parts iguals
+    R("mt27", "Ternari", "H2 Q"),    // 4 cercles · llarg + curt
+    R("mt28", "Ternari", "Q H2"),    // 4 cercles · curt + llarg
+    R("mt29", "Ternari", "H3"),      // 3 cercles sencers · un cop per pols
+    R("mt30", "Ternari", "Q Q Q"),   // 3 cercles · 3 parts iguals
+    R("mt31", "Ternari", "H2 Q"),    // 3 cercles · llarg + curt
+    R("mt32", "Ternari", "Q H2"),    // 3 cercles · curt + llarg
+    R("mt33", "Ternari", "H3"),      // 2 cercles sencers
+    R("mt34", "Ternari", "Q Q Q"),   // 2 cercles · 3 parts iguals
+    R("mt35", "Ternari", "Q H2"),    // 2 cercles · curt + llarg
+    R("mt36", "Ternari", "H2 Q"),    // 2 cercles · llarg + curt
   ];
 
   // ------------------------------ BATERIA -----------------------------------
