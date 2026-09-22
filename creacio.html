@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Rockin · Creació</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=6"></script>
+<script src="dades.js?v=7"></script>
 <style>
   :root{
     --bg:#f6f7f9; --text:#222; --muted:#6b6f76; --accent:#ffcc00; --accent-dark:#e6b800;
@@ -134,7 +134,7 @@
     <label class="f">Mètrica
       <span class="seg" id="metrica">
         <button data-v="binari" class="on">Binari (4/4)</button>
-        <button data-v="ternari">Ternari (3/4)</button>
+        <button data-v="ternari">Ternari (12/8)</button>
       </span>
     </label>
     <label class="f">Tempo <span id="bpmLbl" style="color:#222">100 bpm</span>
@@ -406,7 +406,10 @@ function keysChord(t, midis, dur){ midis.forEach(m=>keysNote(t, m, dur, 0.24)); 
    SEQÜENCIADOR
    ============================================================ */
 let playing=false, timer=null, timeline=[], nextIdx=0, nextTime=0, uiQueue=[], rafId=null;
-const beatsPerBar = () => song.metrica==="ternari" ? 3 : 4;
+// Tant en binari com en ternari el compàs té 4 polsos. En ternari cada pols es divideix en 3 (12/8),
+// així les cartes de bateria en tresets (shuffle) sonen senceres i cada carta de patró ternari
+// (3 micropolsos) omple un pols i es repeteix als 4 polsos del compàs.
+const beatsPerBar = () => 4;
 const barDur = () => beatsPerBar()*60/song.bpm;
 
 function buildTimeline(){
@@ -416,9 +419,14 @@ function buildTimeline(){
     for(let r=0;r<col.rep;r++) chords.forEach((ch,i)=> timeline.push({ci, r, i, n:chords.length, chord:ch}));
   });
 }
-function deckFor(row){ return row.baralla==="ritme" ? (song.metrica==="ternari" ? D.TERNARI : D.BINARI) : row.baralla==="bateria" ? D.BATERIA : D.VEU; }
+function deckFor(row){
+  if(row.baralla==="ritme") return song.metrica==="ternari" ? D.TERNARI : D.BINARI;
+  if(row.baralla==="bateria") return D.BATERIA.filter(c => song.metrica==="ternari" ? c.grid===12 : c.grid!==12);
+  return D.VEU;
+}
 function findCard(row, id){
   if(row.baralla==="ritme") return [...D.BINARI,...D.TERNARI,...D.MELODIC,...(row.id==="guitarra"?D.RASCATS:[])].find(c=>c.id===id) || null;
+  if(row.baralla==="bateria") return D.BATERIA.find(c=>c.id===id) || null;
   return deckFor(row).find(c=>c.id===id) || null;
 }
 const isMelodic = card => !!(card && card.contour);
@@ -426,6 +434,7 @@ const isStrum = card => !!(card && card.strum);
 // Una carta encaixa amb la mètrica? (binari: cartes mb + rascats; ternari: cartes mt). Els contorns melòdics no tenen mètrica.
 function fitsMetre(card){
   if(!card || isMelodic(card)) return true;
+  if(card.grid) return song.metrica==="ternari" ? card.grid===12 : card.grid!==12;   // bateria
   if(song.metrica==="ternari") return !isStrum(card) && D.TERNARI.includes(card);
   return isStrum(card) || D.BINARI.includes(card);
 }
@@ -433,8 +442,8 @@ function fitsMetre(card){
 function adaptToMetre(){
   let n=0;
   song.cols.forEach(c=>ROWS.forEach(r=>{
-    if(r.baralla!=="ritme" || !c.cells[r.id]) return;
-    const card = findCard(r, c.cells[r.id]);
+    if((r.baralla!=="ritme" && r.baralla!=="bateria") || !c.cells[r.id]) return;
+    const card = r.baralla==="bateria" ? D.BATERIA.find(x=>x.id===c.cells[r.id]) : findCard(r, c.cells[r.id]);
     if(!fitsMetre(card)){ const d = deckFor(r); c.cells[r.id] = d[Math.floor(Math.random()*d.length)].id; n++; }
   }));
   return n;
@@ -461,7 +470,7 @@ function scheduleBar(ev, t0){
     const card = findCard(row,id); if(!card) return;
     if(row.id==="bateria"){
       const step = (4*beat)/card.grid;          // les cartes de bateria són de 4 temps
-      const maxPos = card.grid * bpb/4;         // en ternari només sonen els 3 primers temps
+      const maxPos = card.grid;
       ["hh","oh","ride","crash","sn","ghost","kk","ghostkk","t1","t2","t3"].forEach(k=>{
         (card[k]||[]).forEach(p=>{ if(p<maxPos) DRUM[k](t0+p*step); });
       });
@@ -488,8 +497,12 @@ function scheduleBar(ev, t0){
       });
       return;
     }
-    // files rítmiques: cada nota [inici, durada] en negres
-    const notes = card.notes.filter(n=>n[0] < bpb - 1e-6);
+    // files rítmiques: cada nota [inici, durada] en negres.
+    // En ternari (12/8) la carta té 3 micropolsos que omplen un pols, i es repeteix als 4 polsos.
+    let notes;
+    if(song.metrica==="ternari"){
+      notes=[]; for(let p=0;p<4;p++) card.notes.forEach(([a,d])=>{ if(a<3) notes.push([p + a/3, d/3]); });
+    } else notes = card.notes.filter(n=>n[0] < bpb - 1e-6);
     notes.forEach((n,idx)=>{
       const t = t0 + n[0]*beat, dur = n[1]*beat;
       if(row.id==="baix"){
@@ -769,7 +782,7 @@ function diagram(card, row){
   if(row.id==="bateria") return svgBateria(card);
   if(isMelodic(card)) return svgContorn(card, bpb);
   if(isStrum(card)) return svgRascat(card);
-  if(card.notes) return svgRitme(card, bpb);
+  if(card.notes) return svgRitme(card, D.TERNARI.includes(card) ? 3 : 4);
   return "";
 }
 

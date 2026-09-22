@@ -188,6 +188,36 @@ window.ROCKIN_DADES = (function () {
     M(27, [[1, 1], [0, 0]]),
   ];
 
+  // ------------------------------ RASCATS DE GUITARRA ------------------------
+  // Mètrica binària: 8 (o 16) moviments de mà dreta per compàs.
+  // D/U = avall/amunt tocant les cordes (fletxa negra); d/u = moviment sense tocar (fletxa grisa).
+  // Llegit automàticament de les imatges.
+  const G = (n, strum) => ({ id: `rg${n}`, img: `imatges/Rascats/rg${n}.png`, strum, text: strum });
+  const RASCATS = [
+    G(1, "DUDUDUDU"),
+    G(2, "DuDUdUDU"),
+    G(3, "DuDUdUDU"),
+    G(4, "DUDUdUDU"),
+    G(5, "dUdUdUdU"),
+    G(6, "DuDuDuDu"),
+    G(7, "dUDUDUDU"),
+    G(8, "DuDUDUDU"),
+    G(9, "DUdUDUDU"),
+    G(10, "DUDuDUDU"),
+    G(11, "DUDUdUDU"),
+    G(12, "DUDUDuDU"),
+    G(13, "DUDUDUdU"),
+    G(14, "DUDUDUDu"),
+    G(15, "DuDuDUdU"),
+    G(16, "DuDuDUDu"),
+    G(17, "DuDuDuDu"),
+    G(18, "DuDuDuDUdUDudUDU"),
+    G(19, "DudUduDuduDuDUdu"),
+    G(20, "duDuDUduDudUduDu"),
+    G(21, "duDudUduDudUduDu"),
+    G(22, "DuduDudUdUDuDUdu"),
+  ];
+
   // La veu no sona a l'app: la casella només marca si en aquesta part es canta.
   const VEU = [{ id: "veu", img: "imatges/Creacio/veu.png", nom: "Canta" }];
 
@@ -218,5 +248,5 @@ window.ROCKIN_DADES = (function () {
     { nom: "Blues de 12 compassos", prog: "I I I I IV IV I I V IV I V" },
   ];
 
-  return { BINARI, TERNARI, BATERIA, MELODIC, VEU, SECCIONS, INSTRUMENTS, PROGRESSIONS, ritme };
+  return { BINARI, TERNARI, BATERIA, MELODIC, RASCATS, VEU, SECCIONS, INSTRUMENTS, PROGRESSIONS, ritme };
 })();
