@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Rockin · Creació</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=5"></script>
+<script src="dades.js?v=6"></script>
 <style>
   :root{
     --bg:#f6f7f9; --text:#222; --muted:#6b6f76; --accent:#ffcc00; --accent-dark:#e6b800;
@@ -113,7 +113,8 @@
   .opt.sel{ border-color:#28a745; background:#e8f5e9; }
   .opt .im{ height:120px; overflow:hidden; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; }
   .opt img{ max-width:100%; max-height:100%; object-fit:contain; }
-  .opt.ritme img{ transform:scale(2.4); } .opt.melodic img{ transform:scale(1.7); }
+  .opt.ritme img{ transform:scale(2.4); } .opt.melodic img{ transform:scale(1.7); } .opt.rascat img{ transform:scale(1.9); }
+  .cell.rascat img{ transform:scale(1.8); }
   .opt svg.tl{ display:block; width:100%; height:26px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
   .opt svg.dg{ display:block; width:100%; height:34px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
   .opt.special{ display:flex; align-items:center; justify-content:center; min-height:140px; font-size:14px; font-weight:700; }
@@ -417,10 +418,39 @@ function buildTimeline(){
 }
 function deckFor(row){ return row.baralla==="ritme" ? (song.metrica==="ternari" ? D.TERNARI : D.BINARI) : row.baralla==="bateria" ? D.BATERIA : D.VEU; }
 function findCard(row, id){
-  if(row.baralla==="ritme") return [...D.BINARI,...D.TERNARI,...D.MELODIC].find(c=>c.id===id) || null;
+  if(row.baralla==="ritme") return [...D.BINARI,...D.TERNARI,...D.MELODIC,...(row.id==="guitarra"?D.RASCATS:[])].find(c=>c.id===id) || null;
   return deckFor(row).find(c=>c.id===id) || null;
 }
 const isMelodic = card => !!(card && card.contour);
+const isStrum = card => !!(card && card.strum);
+// Una carta encaixa amb la mètrica? (binari: cartes mb + rascats; ternari: cartes mt). Els contorns melòdics no tenen mètrica.
+function fitsMetre(card){
+  if(!card || isMelodic(card)) return true;
+  if(song.metrica==="ternari") return !isStrum(card) && D.TERNARI.includes(card);
+  return isStrum(card) || D.BINARI.includes(card);
+}
+// Quan canvia la mètrica, les cartes rítmiques que no hi encaixen se substitueixen per una de la baralla correcta
+function adaptToMetre(){
+  let n=0;
+  song.cols.forEach(c=>ROWS.forEach(r=>{
+    if(r.baralla!=="ritme" || !c.cells[r.id]) return;
+    const card = findCard(r, c.cells[r.id]);
+    if(!fitsMetre(card)){ const d = deckFor(r); c.cells[r.id] = d[Math.floor(Math.random()*d.length)].id; n++; }
+  }));
+  return n;
+}
+// Rascat: 8 o 16 moviments al compàs de 4 temps; majúscula = toca, minúscula = moviment sense tocar
+function playStrum(card, t0, beat, ch, rGuit){
+  const st = card.strum, n = st.length, step = 4*beat/n;
+  const hits = [...st].map((c,i)=>({c,i})).filter(o=>o.c==="D"||o.c==="U");
+  hits.forEach((h,k)=>{
+    const next = k+1<hits.length ? hits[k+1].i : n;
+    const dur = (next - h.i)*step, t = t0 + h.i*step;
+    const voicing = [rGuit, rGuit+ch.tones[2], rGuit+12, rGuit+12+ch.tones[1]];
+    if(h.c==="D") voicing.forEach((m,j)=>pluck(t+j*0.009, m, dur, 0.5));
+    else voicing.slice(1).reverse().forEach((m,j)=>pluck(t+j*0.008, m, dur, 0.38)); // amunt: cordes agudes, més suau
+  });
+}
 
 function scheduleBar(ev, t0){
   const col = song.cols[ev.ci], bd = barDur(), beat = 60/song.bpm, bpb = beatsPerBar();
@@ -441,6 +471,7 @@ function scheduleBar(ev, t0){
     const rBaix = 36 + rootMidi;                       // octava 2
     const rGuit = 52 + ((rootMidi - 4 + 12) % 12);     // entre E3 i D#4
     const rTecl = 53 + ((rootMidi - 5 + 12) % 12);     // entre F3 i E4
+    if(isStrum(card)){ playStrum(card, t0, beat, ch, rGuit); return; }
     if(isMelodic(card)){
       // contorn melòdic: les alçades es converteixen en notes de l'acord (0 = fonamental)
       const arp = []; for(let o=0;o<4;o++) ch.tones.forEach(x=>arp.push(x+12*o));
@@ -614,7 +645,7 @@ function renderGrid(){
     ROWS.forEach(row=>{
       const id = col.cells[row.id];
       const card = id ? findCard(row,id) : null;
-      const cell = document.createElement("div"); cell.className="cell"+(id?"":" empty")+(row.id==="veu"?" veu":isMelodic(card)?" melodic":row.baralla==="ritme"?" ritme":"");
+      const cell = document.createElement("div"); cell.className="cell"+(id?"":" empty")+(row.id==="veu"?" veu":isMelodic(card)?" melodic":isStrum(card)?" rascat":row.baralla==="ritme"?" ritme":"");
       if(id){
         if(card){
           cell.innerHTML = `<img src="${card.img}" alt="${card.id}">` + (row.id==="bateria" ? `<span class="lbl">${card.num}${card.title?' · '+card.title:''}</span>` : "");
@@ -664,7 +695,10 @@ const PRES = { bateria:.8, baix:.75, guitarra:.75, teclat:.55, veu:.65 };
 function randomCard(row){
   let deck = deckFor(row);
   // per teclat/guitarra/baix, una de cada tres vegades surt un contorn melòdic (arpegi)
-  if(row.baralla==="ritme" && Math.random()<0.33) deck = D.MELODIC;
+  const r = Math.random();
+  if(row.baralla==="ritme" && r<0.33) deck = D.MELODIC;
+  // la guitarra en binari: sovint un rascat
+  else if(row.id==="guitarra" && song.metrica==="binari" && r<0.7) deck = D.RASCATS;
   // els "breaks" de bateria només surten de tant en tant
   if(row.id==="bateria" && Math.random()>0.12) deck = deck.filter(c=>!c.brk);
   return rnd(deck).id;
@@ -720,10 +754,21 @@ function svgContorn(card, bpb){
     pts.forEach(([x,y])=>g+=`<circle cx="${x}" cy="${y}" r="1.8" fill="#fff" stroke="#222" stroke-width="0.8"/>`); });
   return g+`</svg>`;
 }
+function svgRascat(card){
+  const W=100, H=26, n=card.strum.length;
+  let g=`<svg class="tl" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  for(let b=0;b<=4;b++){ const x=b/4*W; g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#ddd"/>`; }
+  [...card.strum].forEach((c,i)=>{ const x=(i+0.5)/n*W, on=(c==="D"||c==="U"), down=(c.toUpperCase()==="D");
+    const col = on ? "#222" : "#ccc", y1 = down?4:H-4, y2 = down?H-4:4, hy = down?-4:4;
+    g+=`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${col}" stroke-width="${on?1.6:1}"/>`;
+    g+=`<polyline points="${x-1.6},${y2+hy} ${x},${y2} ${x+1.6},${y2+hy}" fill="none" stroke="${col}" stroke-width="${on?1.4:1}"/>`; });
+  return g+`</svg>`;
+}
 function diagram(card, row){
   const bpb = beatsPerBar();
   if(row.id==="bateria") return svgBateria(card);
   if(isMelodic(card)) return svgContorn(card, bpb);
+  if(isStrum(card)) return svgRascat(card);
   if(card.notes) return svgRitme(card, bpb);
   return "";
 }
@@ -749,6 +794,7 @@ function openCardModal(col,row){
   const none = document.createElement("div"); none.className="opt special"+(!cur?" sel":""); none.textContent="🔇 Silenci (no toca)"; none.onclick=()=>{ delete col.cells[row.id]; closeModals(); changed(); }; gal.appendChild(none);
   const dice = document.createElement("div"); dice.className="opt special"; dice.textContent="🎲 A l'atzar"; dice.onclick=()=>{ col.cells[row.id]=randomCard(row); closeModals(); changed(); }; gal.appendChild(dice);
   if(row.baralla==="ritme"){
+    if(row.id==="guitarra" && song.metrica==="binari"){ addGroup("Rascat de guitarra · fletxa negra = toca, grisa = moviment sense tocar"); addCards(D.RASCATS, "rascat"); }
     addGroup("Patró rítmic · toca l'acord sencer amb aquest ritme"); addCards(deck, "ritme");
     addGroup("Contorn melòdic · arpegia les notes de l'acord seguint el dibuix"); addCards(D.MELODIC, "melodic");
   } else addCards(deck, row.id==="veu" ? "veu" : "");
@@ -781,6 +827,7 @@ function loadSong(obj){
   song.cols = song.cols.map(c=>Object.assign(newCol(), c));
   // neteja: treu cartes que no pertanyen a la fila (p. ex. d'una versió anterior de l'app)
   song.cols.forEach(c=>ROWS.forEach(r=>{ if(c.cells[r.id] && !findCard(r, c.cells[r.id])) delete c.cells[r.id]; }));
+  adaptToMetre();
   changed();
 }
 
@@ -789,7 +836,7 @@ function init(){
   $("key").innerHTML = KEYS.map(([v,n])=>`<option value="${v}">${n} major</option>`).join("");
   $("progSel").innerHTML = D.PROGRESSIONS.map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
 
-  document.querySelectorAll("#metrica button").forEach(b=>b.onclick=()=>{ song.metrica=b.dataset.v; changed(); restartIfPlaying(); });
+  document.querySelectorAll("#metrica button").forEach(b=>b.onclick=()=>{ song.metrica=b.dataset.v; adaptToMetre(); changed(); restartIfPlaying(); });
   $("bpm").oninput = e=>{ song.bpm=+e.target.value; $("bpmLbl").textContent=song.bpm+" bpm"; };
   $("bpm").onchange = ()=>changed();
   $("key").onchange = e=>{ song.key=e.target.value; changed(); };
