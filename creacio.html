@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rockin · Creació</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="dades.js?v=3"></script>
+<style>
+  :root{
+    --bg:#f6f7f9; --text:#222; --muted:#6b6f76; --accent:#ffcc00; --accent-dark:#e6b800;
+    --panel:#fff; --border:rgba(0,0,0,.14); --pink:#e6b3d9; --blue:#3fb4ff; --green:#79cf5a;
+    --cell-w:150px; --cell-h:104px;
+  }
+  *{ box-sizing:border-box; }
+  body{ font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,sans-serif; background:var(--bg); color:var(--text); margin:0; padding:16px 16px 110px; }
+  h1{ margin:0; font-size:24px; font-weight:700; display:flex; align-items:baseline; gap:12px; }
+  h1 small{ font-size:14px; font-weight:500; color:var(--muted); }
+  h1 a{ font-size:13px; font-weight:600; color:#007bff; text-decoration:none; margin-left:auto; }
+  h2{ font-size:15px; margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  h2 .num{ display:inline-grid; place-items:center; width:24px; height:24px; border-radius:999px; background:var(--accent); font-size:13px; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:14px; margin-top:14px; }
+  .row{ display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-end; }
+  label.f{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); font-weight:600; }
+  select, input[type=text], input[type=number]{ font-size:14px; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#fff; color:var(--text); min-width:0; }
+  input[type=range]{ width:160px; }
+  button{ font-size:14px; padding:9px 13px; border-radius:12px; border:none; background:var(--accent); font-weight:700; cursor:pointer; color:#222; }
+  button:hover{ background:var(--accent-dark); }
+  button.ghost{ background:#fff; border:1px solid var(--border); font-weight:600; }
+  button.ghost:hover{ background:#f1f1f1; }
+  button.danger{ background:#dc3545; color:#fff; }
+  button.blue{ background:#007bff; color:#fff; }
+  button.blue:hover{ background:#0062cc; }
+  .seg{ display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .seg button{ border-radius:0; background:#fff; font-weight:600; padding:8px 12px; }
+  .seg button.on{ background:var(--accent); }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .chip{ background:#eef2f6; border-radius:999px; padding:4px 10px; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .chip.roman{ background:#fff3bf; }
+  .hint{ font-size:12px; color:var(--muted); line-height:1.4; margin:8px 0 0; }
+
+  /* ===== GRAELLA ===== */
+  .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+  .toolbar .sp{ flex:1; }
+  .gridWrap{ overflow:auto; border:2px dashed rgba(0,0,0,.18); border-radius:14px; background:#fff; padding:10px; }
+  .grid{ display:grid; gap:6px; width:max-content; grid-auto-flow:column; }
+  .rowHead{ width:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:12px; background:#f7f8fa; height:var(--cell-h); position:relative; }
+  .rowHead img{ height:56px; width:auto; border-radius:6px; }
+  .rowHead .nm{ font-size:12px; font-weight:700; }
+  .rowHead .ms{ position:absolute; top:4px; right:4px; display:flex; flex-direction:column; gap:3px; }
+  .rowHead .ms button{ width:24px; height:22px; border-radius:7px; padding:0; font-size:11px; font-weight:800; background:#fff; border:1px solid var(--border); color:#555; }
+  .rowHead .ms button.on.mute{ background:#dc3545; color:#fff; border-color:transparent; }
+  .rowHead .ms button.on.solo{ background:#ffcc00; color:#222; border-color:transparent; }
+  .rowHead.silent img, .rowHead.silent .nm{ opacity:.4; }
+  .corner{ width:120px; height:78px; display:flex; align-items:flex-end; justify-content:center; font-size:11px; color:var(--muted); padding-bottom:6px; text-align:center; }
+  .col{ display:contents; }
+  .colHead{ width:var(--cell-w); height:78px; border-radius:12px; background:var(--pink); padding:6px; display:flex; flex-direction:column; gap:4px; position:relative; }
+  .colHead select.sec{ font-weight:800; font-size:13px; padding:4px 6px; border-radius:8px; background:rgba(255,255,255,.7); border:none; text-transform:uppercase; }
+  .colHead .sub{ display:flex; gap:4px; align-items:center; }
+  .colHead .sub select{ font-size:12px; padding:3px 4px; border-radius:8px; background:rgba(255,255,255,.7); border:none; }
+  .colHead .acords{ flex:1; font-size:11px; background:rgba(255,255,255,.7); border:none; border-radius:8px; padding:3px 6px; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
+  .colHead .acords.own{ background:#fff3bf; }
+  .colHead .tools{ position:absolute; top:-8px; right:-6px; display:flex; gap:2px; opacity:0; transition:opacity .15s; }
+  .colHead:hover .tools{ opacity:1; }
+  .colHead .tools button{ width:22px; height:22px; padding:0; font-size:11px; border-radius:999px; background:#fff; border:1px solid var(--border); }
+  .colHead .bars{ display:flex; gap:3px; margin-top:auto; }
+  .colHead .bar{ flex:1; height:5px; border-radius:3px; background:rgba(0,0,0,.15); }
+  .colHead .bar.on{ background:#222; }
+  .cell{ width:var(--cell-w); height:var(--cell-h); border-radius:12px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; overflow:hidden; border:2px solid transparent; }
+  .cell:hover{ border-color:var(--accent); }
+  .cell img{ max-width:100%; max-height:100%; object-fit:contain; display:block; pointer-events:none; }
+  .cell.empty{ background:repeating-linear-gradient(45deg,#f6f7f9 0 8px,#eef0f3 8px 16px); }
+  .cell.empty::after{ content:"＋"; font-size:26px; color:#b7bcc4; }
+  /* les cartes rítmiques i melòdiques tenen el dibuix al mig: les ampliem perquè es vegi bé */
+  .cell.ritme img{ transform:scale(2.3); }
+  .cell.melodic img{ transform:scale(1.7); }
+  .cell.veu img{ transform:scale(1); }
+  .rowHead img{ cursor:pointer; }
+  .rowHead img:hover{ transform:scale(1.06); }
+  .colHead .jump{ position:absolute; left:-6px; top:-8px; width:24px; height:24px; padding:0; border-radius:999px; font-size:11px; background:#fff; border:1px solid var(--border); }
+  .colHead .jump:hover{ background:var(--accent); }
+  .gal h4{ grid-column:1/-1; margin:10px 0 0; font-size:13px; color:var(--muted); border-bottom:1px solid #eee; padding-bottom:4px; }
+  .cell .lbl{ position:absolute; left:4px; bottom:3px; font-size:10px; background:rgba(255,255,255,.85); padding:1px 5px; border-radius:6px; max-width:92%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cell .x{ position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:999px; padding:0; font-size:11px; background:rgba(255,255,255,.9); border:1px solid var(--border); opacity:0; }
+  .cell:hover .x{ opacity:1; }
+  .cell .now{ position:absolute; inset:0; border:3px solid var(--blue); border-radius:12px; pointer-events:none; opacity:0; }
+  .grid.playing .col.playing .cell .now, .grid.playing .col.playing .cell .now{ opacity:1; }
+  .col.playing .colHead{ outline:3px solid var(--blue); }
+  .addCol{ width:60px; height:78px; border-radius:12px; border:2px dashed var(--border); background:#fff; font-size:24px; color:#999; }
+  .addCol:hover{ border-color:var(--accent); color:#222; background:#fff; }
+
+  /* ===== TRANSPORT ===== */
+  .transport{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--border); box-shadow:0 -8px 24px rgba(0,0,0,.08); padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; z-index:50; }
+  .transport .play{ width:56px; height:56px; border-radius:999px; font-size:22px; padding:0; }
+  .transport .pos{ font-variant-numeric:tabular-nums; font-size:14px; min-width:220px; }
+  .transport .pos b{ font-size:18px; }
+  .transport .chord{ font-size:28px; font-weight:800; min-width:70px; text-align:center; background:#fff3bf; border-radius:12px; padding:4px 12px; }
+  .transport .beats{ display:flex; gap:5px; }
+  .transport .beat{ width:14px; height:14px; border-radius:999px; background:#e3e6ea; }
+  .transport .beat.on{ background:var(--blue); }
+  .transport .sp{ flex:1; }
+  .transport label{ font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+
+  /* ===== MODAL ===== */
+  .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:100; align-items:center; justify-content:center; padding:16px; }
+  .modal.open{ display:flex; }
+  .modalBox{ background:#fff; border-radius:14px; width:min(1000px,100%); max-height:92vh; overflow:auto; padding:20px; }
+  .modalBox h3{ margin:0 0 4px; }
+  .modalBox .sub{ color:var(--muted); font-size:13px; margin:0 0 12px; }
+  .gal{ display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
+  .opt{ border:2px solid #e3e6ea; border-radius:10px; padding:6px; cursor:pointer; background:#fafafa; text-align:center; font-size:11px; transition:transform .1s; }
+  .opt:hover{ border-color:var(--accent); transform:scale(1.03); }
+  .opt.sel{ border-color:#28a745; background:#e8f5e9; }
+  .opt .im{ height:120px; overflow:hidden; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; }
+  .opt img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .opt.ritme img{ transform:scale(2.4); } .opt.melodic img{ transform:scale(1.7); }
+  .opt svg.tl{ display:block; width:100%; height:26px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
+  .opt svg.dg{ display:block; width:100%; height:34px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
+  .opt.special{ display:flex; align-items:center; justify-content:center; min-height:140px; font-size:14px; font-weight:700; }
+  .modalBox .foot{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+  .footer{ margin-top:30px; text-align:center; font-size:12px; color:#666; }
+  @media (max-width:700px){ :root{ --cell-w:120px; --cell-h:86px; } .transport .pos{ min-width:0; } }
+</style>
+</head>
+<body>
+
+<h1>Rockin · Creació <small>compondre és triar què sona a cada moment</small><a href="index.html">← Cartes Rockin</a></h1>
+
+<!-- ============ 1. MARC ============ -->
+<div class="panel">
+  <h2><span class="num">1</span> El marc: mètrica, tempo i acords</h2>
+  <div class="row">
+    <label class="f">Mètrica
+      <span class="seg" id="metrica">
+        <button data-v="binari" class="on">Binari (4/4)</button>
+        <button data-v="ternari">Ternari (3/4)</button>
+      </span>
+    </label>
+    <label class="f">Tempo <span id="bpmLbl" style="color:#222">100 bpm</span>
+      <input type="range" id="bpm" min="50" max="180" value="100">
+    </label>
+    <label class="f">Tonalitat
+      <select id="key"></select>
+    </label>
+    <label class="f">Progressió d'acords (roda)
+      <select id="progSel"></select>
+    </label>
+    <label class="f" id="progCustomWrap" style="display:none">Escriu-la tu (I, ii, iii, IV, V, vi, vii°, bVII… o C, Am, F, G)
+      <input type="text" id="progCustom" placeholder="I V vi IV" style="width:260px">
+    </label>
+  </div>
+  <div class="chips" id="progChips" style="margin-top:10px"></div>
+  <p class="hint">Cada <b>columna</b> de la graella és una volta sencera d'aquesta roda d'acords (un compàs per acord). Les cartes de cada instrument es repeteixen a cada compàs seguint l'acord que toca.</p>
+</div>
+
+<!-- ============ 2. GRAELLA ============ -->
+<div class="panel">
+  <h2><span class="num">2</span> L'estructura: què toca cadascú a cada part</h2>
+  <div class="toolbar">
+    <button id="btnRandom">🎲 Proposta aleatòria</button>
+    <button id="btnRandomFill" class="ghost" title="Omple només les caselles buides">🎲 Omple els buits</button>
+    <button id="btnAddCol" class="ghost">＋ Afegeix columna</button>
+    <span class="sp"></span>
+    <button id="btnExport" class="ghost">📸 Descarrega PNG</button>
+    <button id="btnSave" class="ghost">💾 Guarda</button>
+    <button id="btnLoad" class="ghost">📂 Carrega</button>
+    <button id="btnLink" class="ghost" title="Copia un enllaç amb aquesta cançó">🔗 Enllaç</button>
+    <button id="btnClear" class="danger">🗑️ Buida</button>
+    <input type="file" id="fileLoad" accept="application/json" style="display:none">
+  </div>
+  <div class="gridWrap" id="gridWrap"><div class="grid" id="grid"></div></div>
+  <p class="hint">Clica una casella per triar la carta (o deixar-la en silenci). Clica el nom d'una secció per canviar-lo, el <b>×N</b> per repetir la roda i els <b>acords</b> per donar a aquesta part una roda diferent. Teclat, guitarra i baix poden tocar un <b>patró rítmic</b> (l'acord sencer) o un <b>contorn melòdic</b> (arpegi amb notes de l'acord). El <b>▶</b> de cada part hi salta mentre sona (o tecles 1–9). Clica la icona d'un instrument per sentir-lo sol; <b>M</b> silencia una pista i <b>S</b> la deixa en solo.</p>
+</div>
+
+<div class="footer">Eina sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank">CC BY-NC-SA 4.0</a> · Rockin</div>
+
+<!-- ============ 3. TRANSPORT ============ -->
+<div class="transport">
+  <button class="play" id="btnPlay" title="Espai = reproduir / aturar">▶</button>
+  <div class="chord" id="nowChord">–</div>
+  <div class="pos" id="nowPos"><b>Aturat</b><br><span style="color:var(--muted)">Prem ▶ per escoltar la cançó</span></div>
+  <div class="beats" id="beats"></div>
+  <span class="sp"></span>
+  <label><input type="checkbox" id="loop" checked> En bucle</label>
+  <label>Volum <input type="range" id="vol" min="0" max="100" value="80" style="width:100px"></label>
+</div>
+
+<!-- ============ MODAL CARTES ============ -->
+<div class="modal" id="modalCards">
+  <div class="modalBox">
+    <h3 id="mcTitle">Tria una carta</h3>
+    <p class="sub" id="mcSub"></p>
+    <div class="gal" id="mcGal"></div>
+    <div class="foot"><button class="ghost" data-close>Tancar</button></div>
+  </div>
+</div>
+
+<!-- ============ MODAL ACORDS COLUMNA ============ -->
+<div class="modal" id="modalProg">
+  <div class="modalBox" style="width:min(520px,100%)">
+    <h3>Acords d'aquesta part</h3>
+    <p class="sub">Per defecte totes les parts fan servir la roda general. Aquí pots donar-li una de diferent (p. ex. una tornada amb altres acords).</p>
+    <select id="mpSel" style="width:100%"></select>
+    <input type="text" id="mpCustom" placeholder="Escriu-la: I V vi IV" style="width:100%; margin-top:8px; display:none">
+    <div class="chips" id="mpChips" style="margin-top:10px"></div>
+    <div class="foot"><button class="ghost" id="mpGlobal">Usa la roda general</button><button id="mpOk">D'acord</button></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ESTAT
+   ============================================================ */
+const D = window.ROCKIN_DADES;
+if(!D){ alert("No s'ha carregat dades.js: comprova que és a la mateixa carpeta que creacio.html."); }
+const ROWS = D.INSTRUMENTS;
+const KEYS = [["C","C"],["G","G"],["D","D"],["A","A"],["E","E"],["B","B"],["F#","F#"],["Db","Db"],["Ab","Ab"],["Eb","Eb"],["Bb","Bb"],["F","F"]];
+const NOTE_SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const NOTE_FLAT  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const FLAT_KEYS = new Set(["F","Bb","Eb","Ab","Db","Gb"]);
+
+let song = defaultSong();
+let muted = { bateria:false, teclat:false, veu:false, baix:false, guitarra:false };
+let solo = { bateria:false, teclat:false, veu:false, baix:false, guitarra:false };
+// una fila sona si no està silenciada i (no hi ha cap solo, o ella és solo)
+function rowSilent(id){ const anySolo = Object.values(solo).some(Boolean); return muted[id] || (anySolo && !solo[id]); }
+
+function defaultSong(){
+  return { metrica:"binari", bpm:100, key:"C", prog:"I V vi IV", cols:[] };
+}
+function newCol(sec){ return { sec: sec || "Estrofa", rep:1, prog:null, cells:{} }; }
+
+/* ============================================================
+   HARMONIA
+   ============================================================ */
+const ROMAN = { I:0, II:1, III:2, IV:3, V:4, VI:5, VII:6 };
+const MAJOR = [0,2,4,5,7,9,11];
+const NOTE_IDX = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+
+function keyRoot(key){ const m = key.match(/^([A-G])([#b]?)/); return (NOTE_IDX[m[1]] + (m[2]==="#"?1:m[2]==="b"?-1:0)+12)%12; }
+
+// Retorna {root (0-11), tones:[semitons], name}
+function parseChord(tok, key){
+  tok = tok.trim(); if(!tok) return null;
+  const useFlat = FLAT_KEYS.has(key);
+  const names = useFlat ? NOTE_FLAT : NOTE_SHARP;
+  let root=null, minor=false, suffix="", accChar="";
+  // 1) numeral romà
+  let m = tok.match(/^([b#]?)(vii|vi|iv|v|iii|ii|i|VII|VI|IV|V|III|II|I)(.*)$/);
+  if(m){
+    accChar = m[1];
+    const acc = accChar==="b"?-1:accChar==="#"?1:0;
+    const num = m[2]; minor = num===num.toLowerCase();
+    root = (keyRoot(key) + MAJOR[ROMAN[num.toUpperCase()]] + acc + 12) % 12;
+    suffix = m[3];
+  }else{
+    // 2) nom absolut: C, Am, F#m7, Bbmaj7…
+    m = tok.match(/^([A-G])([#b]?)(m(?!aj))?(.*)$/);
+    if(!m) return null;
+    accChar = m[2];
+    root = (NOTE_IDX[m[1]] + (accChar==="#"?1:accChar==="b"?-1:0) + 12) % 12;
+    minor = !!m[3]; suffix = m[4];
+  }
+  // nom de la nota: bemolls si el grau porta "b" (bVII → Bb) o si l'usuari l'ha escrit amb b
+  const nm = accChar==="b" ? NOTE_FLAT : accChar==="#" ? NOTE_SHARP : names;
+  let tones = minor ? [0,3,7] : [0,4,7];
+  let label = nm[root] + (minor ? "m" : "");
+  const s = suffix.toLowerCase();
+  if(s.includes("°")||s.includes("dim")||s.includes("o")){ tones=[0,3,6]; label = names[root]+"°"; }
+  else if(s.includes("sus4")){ tones=[0,5,7]; label = names[root]+"sus4"; }
+  else if(s.includes("sus2")){ tones=[0,2,7]; label = names[root]+"sus2"; }
+  else if(s.includes("maj7")){ tones=[...tones,11]; label += "maj7"; }
+  else if(s.includes("7")){ tones=[...tones,10]; label += "7"; }
+  else if(s.includes("+")||s.includes("aug")){ tones=[0,4,8]; label = names[root]+"+"; }
+  return { root, tones, name: label, roman: tok };
+}
+function parseProg(str, key){
+  return str.replace(/[–\-|,]+/g," ").trim().split(/\s+/).map(t=>parseChord(t,key)).filter(Boolean);
+}
+function colProgStr(col){ return col.prog || song.prog; }
+function colChords(col){ const c = parseProg(colProgStr(col), song.key); return c.length ? c : parseProg("I", song.key); }
+
+/* ============================================================
+   MOTOR DE SO (Web Audio, tot sintetitzat)
+   ============================================================ */
+let AC=null, master=null, noiseBuf=null;
+function audio(){
+  if(AC) return AC;
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  const comp = AC.createDynamicsCompressor(); comp.threshold.value=-12; comp.ratio.value=4;
+  master = AC.createGain(); master.gain.value = (+document.getElementById("vol").value)/100;
+  master.connect(comp); comp.connect(AC.destination);
+  noiseBuf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
+  const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  return AC;
+}
+const mtof = m => 440*Math.pow(2,(m-69)/12);
+function env(g, t, a, peak, dec, sus, rel, end){
+  g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(peak, t+a);
+  g.gain.exponentialRampToValueAtTime(Math.max(sus,0.0001), t+a+dec);
+  g.gain.setValueAtTime(Math.max(sus,0.0001), Math.max(end, t+a+dec));
+  g.gain.exponentialRampToValueAtTime(0.0001, Math.max(end, t+a+dec)+rel);
+}
+function noise(t, dur, filterType, freq, q, gain, decay){
+  const s = AC.createBufferSource(); s.buffer=noiseBuf;
+  const f = AC.createBiquadFilter(); f.type=filterType; f.frequency.value=freq; f.Q.value=q||1;
+  const g = AC.createGain(); g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(0.0001,t+decay);
+  s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+decay+0.05);
+}
+const DRUM = {
+  kk(t,v=1){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine";
+    o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12);
+    g.gain.setValueAtTime(1.1*v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.45);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+0.5);
+    noise(t,0.03,"lowpass",900,1,0.5*v,0.03); },
+  sn(t,v=1){ noise(t,0.2,"bandpass",1900,0.7,0.9*v,0.22); noise(t,0.2,"highpass",4000,1,0.35*v,0.12);
+    const o=AC.createOscillator(), g=AC.createGain(); o.type="triangle"; o.frequency.setValueAtTime(230,t); o.frequency.exponentialRampToValueAtTime(150,t+0.08);
+    g.gain.setValueAtTime(0.5*v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.15); o.connect(g); g.connect(master); o.start(t); o.stop(t+0.2); },
+  ghost(t){ DRUM.sn(t,0.28); },
+  hh(t,v=1){ noise(t,0.06,"highpass",7500,1,0.35*v,0.06); },
+  oh(t){ noise(t,0.4,"highpass",6500,1,0.35,0.4); },
+  ride(t){ noise(t,0.5,"bandpass",5200,2,0.25,0.5); noise(t,0.1,"highpass",9000,1,0.15,0.08); },
+  crash(t){ noise(t,1.4,"highpass",3500,0.5,0.45,1.4); },
+  t1(t){ tom(t,260); }, t2(t){ tom(t,180); }, t3(t){ tom(t,120); },
+  ghostkk(t){ DRUM.kk(t,0.4); },
+};
+function tom(t,f){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine";
+  o.frequency.setValueAtTime(f*1.4,t); o.frequency.exponentialRampToValueAtTime(f,t+0.1);
+  g.gain.setValueAtTime(0.9,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.4); o.connect(g); g.connect(master); o.start(t); o.stop(t+0.45); noise(t,0.05,"lowpass",1500,1,0.3,0.05); }
+
+function bassNote(t, midi, dur){
+  const o=AC.createOscillator(), o2=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain();
+  o.type="sawtooth"; o2.type="sine"; o.frequency.value=mtof(midi); o2.frequency.value=mtof(midi);
+  f.type="lowpass"; f.frequency.setValueAtTime(900,t); f.frequency.exponentialRampToValueAtTime(250,t+0.25); f.Q.value=2;
+  const end=t+Math.max(0.12,dur*0.92);
+  env(g,t,0.008,0.42,0.15,0.26,0.06,end);
+  o.connect(f); o2.connect(f); f.connect(g); g.connect(master); o.start(t); o2.start(t); o.stop(end+0.15); o2.stop(end+0.15);
+}
+// Guitarra: corda pinçada (algorisme Karplus-Strong). Es genera una mostra per nota i es guarda.
+const KS = new Map();
+function pluckBuffer(midi){
+  if(KS.has(midi)) return KS.get(midi);
+  const sr = AC.sampleRate, f = mtof(midi), N = Math.max(2, Math.round(sr/f)), len = Math.round(sr*2.2);
+  const buf = AC.createBuffer(1, len, sr), d = buf.getChannelData(0);
+  const ring = new Float32Array(N);
+  for(let i=0;i<N;i++) ring[i] = (Math.random()*2-1);       // excitació: soroll
+  // una mica de "pick position": suavitzem l'excitació
+  for(let i=1;i<N;i++) ring[i] = 0.5*(ring[i]+ring[i-1]);
+  const damp = 0.996 - (midi-40)*0.0006;                     // les agudes s'apaguen abans
+  let idx=0, prev=0;
+  for(let i=0;i<len;i++){
+    const cur = ring[idx];
+    d[i] = cur;
+    const next = ring[(idx+1)%N];
+    ring[idx] = damp * 0.5 * (cur + next);                   // filtre passa-baixos al bucle
+    idx = (idx+1)%N;
+  }
+  KS.set(midi, buf); return buf;
+}
+function pluck(t, midi, dur, gain){
+  const s = AC.createBufferSource(); s.buffer = pluckBuffer(midi);
+  const f = AC.createBiquadFilter(); f.type="lowpass"; f.frequency.value = 5200;
+  const body = AC.createBiquadFilter(); body.type="peaking"; body.frequency.value=180; body.gain.value=4; body.Q.value=1; // "caixa" de la guitarra
+  const g = AC.createGain(); const end = t + Math.min(Math.max(0.2, dur), 2.0);
+  g.gain.setValueAtTime(gain, t); g.gain.setValueAtTime(gain, end-0.05); g.gain.exponentialRampToValueAtTime(0.0001, end+0.08);
+  s.connect(f); f.connect(body); body.connect(g); g.connect(master); s.start(t); s.stop(end+0.15);
+}
+function guitarStrum(t, midis, dur){
+  midis.forEach((m,i)=> pluck(t+i*0.012, m, dur, 0.62));
+}
+// Teclat: piano elèctric tipus Rhodes (síntesi FM: la "tina" metàl·lica s'apaga ràpid i queda el cos càlid)
+function keysNote(t, m, dur, gain){
+  const f0 = mtof(m), end = t + Math.max(0.2, dur*0.95), vel = Math.min(1, gain/0.25);
+  const car = AC.createOscillator(), mod = AC.createOscillator(), modG = AC.createGain();
+  car.type="sine"; car.frequency.value=f0;
+  mod.type="sine"; mod.frequency.value=f0*14;               // relació 14: campaneta de la tina
+  modG.gain.setValueAtTime(f0*0.9*vel, t); modG.gain.exponentialRampToValueAtTime(f0*0.04, t+0.35);
+  mod.connect(modG); modG.connect(car.frequency);
+  const body = AC.createOscillator(), bodyG = AC.createGain();  // cos: octava suau
+  body.type="sine"; body.frequency.value=f0*2; bodyG.gain.value=0.18;
+  const g = AC.createGain();
+  env(g, t, 0.004, gain, 0.9, gain*0.35, 0.25, end);
+  car.connect(g); body.connect(bodyG); bodyG.connect(g); g.connect(master);
+  [car,mod,body].forEach(o=>{ o.start(t); o.stop(end+0.4); });
+}
+function keysChord(t, midis, dur){ midis.forEach(m=>keysNote(t, m, dur, 0.24)); }
+
+/* ============================================================
+   SEQÜENCIADOR
+   ============================================================ */
+let playing=false, timer=null, timeline=[], nextIdx=0, nextTime=0, uiQueue=[], rafId=null;
+const beatsPerBar = () => song.metrica==="ternari" ? 3 : 4;
+const barDur = () => beatsPerBar()*60/song.bpm;
+
+function buildTimeline(){
+  timeline=[];
+  song.cols.forEach((col,ci)=>{
+    const chords = colChords(col);
+    for(let r=0;r<col.rep;r++) chords.forEach((ch,i)=> timeline.push({ci, r, i, n:chords.length, chord:ch}));
+  });
+}
+function deckFor(row){ return row.baralla==="ritme" ? (song.metrica==="ternari" ? D.TERNARI : D.BINARI) : row.baralla==="bateria" ? D.BATERIA : D.VEU; }
+function findCard(row, id){
+  if(row.baralla==="ritme") return [...D.BINARI,...D.TERNARI,...D.MELODIC].find(c=>c.id===id) || null;
+  return deckFor(row).find(c=>c.id===id) || null;
+}
+const isMelodic = card => !!(card && card.contour);
+
+function scheduleBar(ev, t0){
+  const col = song.cols[ev.ci], bd = barDur(), beat = 60/song.bpm, bpb = beatsPerBar();
+  const ch = ev.chord;
+  ROWS.forEach(row=>{
+    if(row.nomesVisual || rowSilent(row.id)) return;
+    const id = col.cells[row.id]; if(!id) return;
+    const card = findCard(row,id); if(!card) return;
+    if(row.id==="bateria"){
+      const step = (4*beat)/card.grid;          // les cartes de bateria són de 4 temps
+      const maxPos = card.grid * bpb/4;         // en ternari només sonen els 3 primers temps
+      ["hh","oh","ride","crash","sn","ghost","kk","ghostkk","t1","t2","t3"].forEach(k=>{
+        (card[k]||[]).forEach(p=>{ if(p<maxPos) DRUM[k](t0+p*step); });
+      });
+      return;
+    }
+    const rootMidi = ch.root;
+    const rBaix = 36 + rootMidi;                       // octava 2
+    const rGuit = 52 + ((rootMidi - 4 + 12) % 12);     // entre E3 i D#4
+    const rTecl = 53 + ((rootMidi - 5 + 12) % 12);     // entre F3 i E4
+    if(isMelodic(card)){
+      // contorn melòdic: les alçades es converteixen en notes de l'acord (0 = fonamental)
+      const arp = []; for(let o=0;o<4;o++) ch.tones.forEach(x=>arp.push(x+12*o));
+      const base = row.id==="baix" ? rBaix : row.id==="guitarra" ? rGuit : rTecl;
+      const nFr = card.contour.length, frDur = bpb*beat/nFr;
+      card.contour.forEach((frase,fi)=>{
+        const nDur = frDur/frase.length;
+        frase.forEach((h,ni)=>{
+          const t = t0 + fi*frDur + ni*nDur, m = base + arp[Math.min(h, arp.length-1)];
+          if(row.id==="baix") bassNote(t, m, nDur);
+          else if(row.id==="guitarra") pluck(t, m, nDur*1.4, 0.75);
+          else keysNote(t, m, nDur*1.2, 0.26);
+        });
+      });
+      return;
+    }
+    // files rítmiques: cada nota [inici, durada] en negres
+    const notes = card.notes.filter(n=>n[0] < bpb - 1e-6);
+    notes.forEach((n,idx)=>{
+      const t = t0 + n[0]*beat, dur = n[1]*beat;
+      if(row.id==="baix"){
+        bassNote(t, rBaix, dur); // sempre la fonamental
+      }else if(row.id==="guitarra"){
+        guitarStrum(t, [rGuit, rGuit+ch.tones[2], rGuit+12, rGuit+12+ch.tones[1], rGuit+12+ch.tones[2]], dur);
+      }else if(row.id==="teclat"){
+        keysChord(t, ch.tones.map(x=>rTecl+x), dur);
+      }
+    });
+  });
+}
+
+function tick(){
+  const ac = AC;
+  while(nextTime < ac.currentTime + 0.15){
+    if(nextIdx >= timeline.length){
+      if(document.getElementById("loop").checked && timeline.length){ nextIdx=0; }
+      else { uiQueue.push({time:nextTime, stop:true}); clearInterval(timer); timer=null; return; }
+    }
+    const ev = timeline[nextIdx];
+    scheduleBar(ev, nextTime);
+    uiQueue.push({time:nextTime, ev, dur:barDur()});
+    nextTime += barDur(); nextIdx++;
+  }
+}
+function uiLoop(){
+  if(!playing) return;
+  const now = AC.currentTime;
+  while(uiQueue.length && uiQueue[0].time <= now){
+    const u = uiQueue.shift();
+    if(u.stop){ stop(); return; }
+    showPos(u.ev, u.time, u.dur);
+  }
+  // pulsacions
+  if(curBar){ const b = Math.floor((now-curBar.time)/(60/song.bpm)); document.querySelectorAll("#beats .beat").forEach((el,i)=>el.classList.toggle("on",i===b)); }
+  rafId = requestAnimationFrame(uiLoop);
+}
+let curBar=null;
+function showPos(ev, time, dur){
+  curBar={time,dur};
+  const col = song.cols[ev.ci];
+  document.getElementById("nowChord").textContent = ev.chord.name;
+  document.getElementById("nowPos").innerHTML = `<b>${col.sec}</b> ${col.rep>1?`(volta ${ev.r+1}/${col.rep})`:""}<br><span style="color:var(--muted)">compàs ${ev.i+1} de ${ev.n} · ${ev.chord.roman}</span>`;
+  document.querySelectorAll("#grid .col").forEach((el,i)=>el.classList.toggle("playing", i===ev.ci));
+  const head = document.querySelectorAll("#grid .colHead")[ev.ci];
+  if(head) head.querySelectorAll(".bar").forEach((b,i)=>b.classList.toggle("on", i===ev.i));
+}
+async function play(startCol){
+  buildTimeline();
+  if(!timeline.length){ alert("Afegeix alguna columna amb cartes abans de reproduir."); return; }
+  audio();
+  if(AC.state!=="running"){ try{ await AC.resume(); }catch(e){} }
+  if(AC.state!=="running"){
+    // Safari/iOS de vegades necessita un segon intent dins del mateix gest
+    try{ const o=AC.createOscillator(), g=AC.createGain(); g.gain.value=0; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.01); await AC.resume(); }catch(e){}
+  }
+  if(AC.state!=="running"){ alert("El navegador ha bloquejat el so (estat: "+AC.state+"). Prova de tornar a prémer ▶, comprova que la pestanya no estigui silenciada i que el volum de l'ordinador estigui activat."); }
+  const sonen = ROWS.filter(r=>!r.nomesVisual && !rowSilent(r.id));
+  if(!sonen.length){ alert("Totes les pistes estan silenciades (botons M/S a l'esquerra de cada fila)."); }
+  playing=true; nextIdx=0; nextTime=AC.currentTime+0.1; uiQueue=[];
+  if(typeof startCol==="number"){ const i = timeline.findIndex(ev=>ev.ci===startCol); if(i>=0) nextIdx=i; }
+  document.getElementById("btnPlay").textContent="■"; document.getElementById("grid").classList.add("playing");
+  document.getElementById("beats").innerHTML = Array.from({length:beatsPerBar()},()=>'<div class="beat"></div>').join("");
+  timer=setInterval(tick,25); tick(); uiLoop();
+}
+function stop(){
+  playing=false; if(timer){clearInterval(timer); timer=null;} if(rafId) cancelAnimationFrame(rafId);
+  curBar=null;
+  document.getElementById("btnPlay").textContent="▶"; document.getElementById("grid").classList.remove("playing");
+  document.querySelectorAll("#grid .col").forEach(el=>el.classList.remove("playing"));
+  document.querySelectorAll("#grid .bar").forEach(b=>b.classList.remove("on"));
+  document.querySelectorAll("#beats .beat").forEach(b=>b.classList.remove("on"));
+  document.getElementById("nowChord").textContent="–";
+  document.getElementById("nowPos").innerHTML=`<b>Aturat</b><br><span style="color:var(--muted)">Prem ▶ per escoltar la cançó</span>`;
+}
+function restartIfPlaying(){ if(playing){ stop(); play(); } }
+function jumpTo(ci){
+  if(!playing){ play(ci); return; }
+  buildTimeline();
+  const idx = timeline.findIndex(ev=>ev.ci===ci); if(idx<0) return;
+  // el compàs que ja està programat acaba; el següent serà el de la columna triada
+  nextIdx = idx;
+  const head = document.querySelectorAll("#grid .colHead")[ci]; if(head){ head.style.transition="none"; head.style.background="#ffe08a"; setTimeout(()=>{ head.style.transition="background .5s"; head.style.background=""; },60); }
+}
+
+/* ============================================================
+   INTERFÍCIE
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+function renderMarc(){
+  document.querySelectorAll("#metrica button").forEach(b=>b.classList.toggle("on", b.dataset.v===song.metrica));
+  $("bpm").value = song.bpm; $("bpmLbl").textContent = song.bpm+" bpm";
+  $("key").value = song.key;
+  const preset = D.PROGRESSIONS.find(p=>p.prog===song.prog);
+  $("progSel").value = preset ? preset.prog : "custom";
+  $("progCustomWrap").style.display = preset ? "none" : "";
+  if(!preset) $("progCustom").value = song.prog;
+  $("progChips").innerHTML = chipsHTML(song.prog);
+}
+function chipsHTML(progStr){
+  const ch = parseProg(progStr, song.key);
+  if(!ch.length) return '<span class="chip" style="background:#fde2e2">No entenc la progressió</span>';
+  return ch.map(c=>`<span class="chip roman">${c.roman}</span><span class="chip">${c.name}</span>`).join('<span style="opacity:.4">·</span>');
+}
+
+function renderGrid(){
+  const g = $("grid"); g.innerHTML="";
+  g.style.gridTemplateRows = `78px repeat(${ROWS.length}, var(--cell-h))`;
+  // capçaleres de fila
+  const c0 = document.createElement("div"); c0.className="corner"; c0.textContent="instrument ↓ / part →"; g.appendChild(c0);
+  ROWS.forEach(row=>{
+    const h = document.createElement("div"); h.className="rowHead"+(!row.nomesVisual && rowSilent(row.id)?" silent":"");
+    h.innerHTML = `<img src="${row.img}" alt="" title="Clica per sentir com sona"><div class="nm">${row.nom}${row.nomesVisual?' <span style="font-weight:400;color:var(--muted)">(no sona)</span>':''}</div>`;
+    if(!row.nomesVisual) h.querySelector("img").onclick = ()=>previewRow(row);
+    if(!row.nomesVisual){
+      const ms = document.createElement("div"); ms.className="ms";
+      const m = document.createElement("button"); m.className="mute"+(muted[row.id]?" on":""); m.title="Mute: silencia aquesta pista"; m.textContent="M";
+      m.onclick = ()=>{ muted[row.id]=!muted[row.id]; renderGrid(); };
+      const so = document.createElement("button"); so.className="solo"+(solo[row.id]?" on":""); so.title="Solo: només sona aquesta pista (es poden combinar)"; so.textContent="S";
+      so.onclick = ()=>{ solo[row.id]=!solo[row.id]; renderGrid(); };
+      ms.appendChild(m); ms.appendChild(so); h.appendChild(ms);
+    }
+    g.appendChild(h);
+  });
+  // columnes
+  song.cols.forEach((col,ci)=>{
+    const wrap = document.createElement("div"); wrap.className="col";
+    const head = document.createElement("div"); head.className="colHead";
+    const chords = colChords(col);
+    head.innerHTML = `
+      <select class="sec">${D.SECCIONS.map(s=>`<option ${s===col.sec?"selected":""}>${s}</option>`).join("")}</select>
+      <div class="sub">
+        <select class="rep" title="Quantes voltes de la roda">${[1,2,3,4].map(n=>`<option value="${n}" ${n===col.rep?"selected":""}>×${n}</option>`).join("")}</select>
+        <button class="acords ${col.prog?'own':''}" title="Acords d'aquesta part">${chords.map(c=>c.name).join(" ")}</button>
+      </div>
+      <div class="bars">${chords.map(()=>'<div class="bar"></div>').join("")}</div>
+      <button class="jump" title="Salta a aquesta part (tecla ${ci+1})">▶</button>
+      <div class="tools">
+        <button title="Atzar en aquesta columna" data-act="dice">🎲</button>
+        <button title="Duplica" data-act="dup">⧉</button>
+        <button title="Mou a l'esquerra" data-act="left">‹</button>
+        <button title="Mou a la dreta" data-act="right">›</button>
+        <button title="Elimina la columna" data-act="del">✕</button>
+      </div>`;
+    head.querySelector(".sec").onchange = e=>{ col.sec=e.target.value; changed(); };
+    head.querySelector(".rep").onchange = e=>{ col.rep=+e.target.value; changed(); };
+    head.querySelector(".acords").onclick = ()=>openProgModal(col);
+    head.querySelector(".jump").onclick = ()=>jumpTo(ci);
+    head.querySelectorAll(".tools button").forEach(b=>b.onclick=()=>colAction(ci,b.dataset.act));
+    wrap.appendChild(head);
+    ROWS.forEach(row=>{
+      const id = col.cells[row.id];
+      const card = id ? findCard(row,id) : null;
+      const cell = document.createElement("div"); cell.className="cell"+(id?"":" empty")+(row.id==="veu"?" veu":isMelodic(card)?" melodic":row.baralla==="ritme"?" ritme":"");
+      if(id){
+        if(card){
+          cell.innerHTML = `<img src="${card.img}" alt="${card.id}">` + (row.id==="bateria" ? `<span class="lbl">${card.num}${card.title?' · '+card.title:''}</span>` : "");
+        }else cell.innerHTML = `<span class="lbl">carta ${id} no trobada</span>`;
+        const x = document.createElement("button"); x.className="x"; x.textContent="✕"; x.title="Buida";
+        x.onclick = e=>{ e.stopPropagation(); delete col.cells[row.id]; changed(); };
+        cell.appendChild(x);
+      }
+      const now = document.createElement("div"); now.className="now"; cell.appendChild(now);
+      cell.onclick = ()=>openCardModal(col,row);
+      wrap.appendChild(cell);
+    });
+    g.appendChild(wrap);
+  });
+  // botó afegir
+  const add = document.createElement("button"); add.className="addCol"; add.textContent="＋"; add.title="Afegeix una part";
+  add.onclick = addColumn; g.appendChild(add);
+  for(let i=0;i<ROWS.length;i++){ const f=document.createElement("div"); g.appendChild(f); }
+}
+
+function colAction(ci, act){
+  const cols = song.cols;
+  if(act==="del"){ cols.splice(ci,1); }
+  if(act==="dup"){ cols.splice(ci+1,0, JSON.parse(JSON.stringify(cols[ci]))); }
+  if(act==="left" && ci>0){ [cols[ci-1],cols[ci]]=[cols[ci],cols[ci-1]]; }
+  if(act==="right" && ci<cols.length-1){ [cols[ci+1],cols[ci]]=[cols[ci],cols[ci+1]]; }
+  if(act==="dice"){ randomizeColumn(cols[ci], true); }
+  changed();
+}
+function addColumn(){
+  const seq = ["Intro","Estrofa","Tornada","Estrofa","Tornada","Pont","Tornada","Coda"];
+  song.cols.push(newCol(seq[song.cols.length] || "Estrofa")); changed();
+}
+
+async function previewRow(row){
+  audio(); if(AC.state!=="running"){ try{ await AC.resume(); }catch(e){} }
+  const t = AC.currentTime+0.05, ch = parseChord("I", song.key), beat = 60/song.bpm;
+  if(row.id==="bateria"){ const c = D.BATERIA[0]; const step=beat/4; ["hh","sn","kk"].forEach(k=>(c[k]||[]).forEach(p=>DRUM[k](t+p*step))); }
+  else if(row.id==="baix"){ [0,1,2,3].forEach(i=>bassNote(t+i*beat, 36+ch.root, beat)); }
+  else if(row.id==="guitarra"){ const r=52+((ch.root-4+12)%12); [0,1,2,3].forEach(i=>guitarStrum(t+i*beat, [r,r+7,r+12,r+16,r+19], beat)); }
+  else if(row.id==="teclat"){ const r=53+((ch.root-5+12)%12); [0,1,2,3].forEach(i=>keysChord(t+i*beat, ch.tones.map(x=>r+x), beat)); }
+}
+
+/* ---------- atzar ---------- */
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+const PRES = { bateria:.8, baix:.75, guitarra:.75, teclat:.55, veu:.65 };
+function randomCard(row){
+  let deck = deckFor(row);
+  // per teclat/guitarra/baix, una de cada tres vegades surt un contorn melòdic (arpegi)
+  if(row.baralla==="ritme" && Math.random()<0.33) deck = D.MELODIC;
+  // els "breaks" de bateria només surten de tant en tant
+  if(row.id==="bateria" && Math.random()>0.12) deck = deck.filter(c=>!c.brk);
+  return rnd(deck).id;
+}
+function randomizeColumn(col, all){
+  ROWS.forEach(row=>{
+    if(!all && col.cells[row.id]) return;
+    let p = PRES[row.id]; if(col.sec==="Intro") p *= 0.6; if(col.sec==="Tornada") p = Math.min(1,p+0.2);
+    if(Math.random()<p) col.cells[row.id] = randomCard(row); else if(all) delete col.cells[row.id];
+  });
+  // mínim un instrument que soni per part
+  const sonen = ROWS.filter(r=>!r.nomesVisual);
+  if(!sonen.some(r=>col.cells[r.id])){ const r = rnd(sonen); col.cells[r.id]=randomCard(r); }
+}
+function randomSong(){
+  const structs = [["Intro","Estrofa","Tornada","Estrofa","Tornada"],["Intro","Estrofa","Pre-tornada","Tornada","Coda"],["A","B","A","B"],["Intro","Estrofa","Tornada","Pont","Tornada"],["Estrofa","Tornada","Estrofa","Tornada","Coda"]];
+  const st = rnd(structs);
+  song.cols = st.map(s=>{ const c=newCol(s); c.rep = (s==="Estrofa"||s==="Tornada") ? rnd([1,2,2]) : 1; randomizeColumn(c,true); return c; });
+  // que les parts iguals sonin igual (Estrofa = Estrofa) per fer-ho més entenedor
+  const seen={}; song.cols.forEach(c=>{ if(seen[c.sec]) c.cells = JSON.parse(JSON.stringify(seen[c.sec].cells)); else seen[c.sec]=c; });
+  changed();
+}
+
+/* ---------- diagrames "què entén l'app" ---------- */
+function svgRitme(card, bpb){
+  // línia de temps del compàs: pulsacions com a línies, notes com a barres blaves
+  const W=100, H=26, notes=card.notes;
+  let g=`<svg class="tl" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><title>${card.text}</title>`;
+  for(let b=0;b<=bpb;b++){ const x=b/bpb*W; g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#ddd" stroke-width="${b===0||b===bpb?2:1}"/>`; }
+  for(let b=0;b<bpb;b++) for(let k=1;k<4;k++){ const x=(b+k/4)/bpb*W; g+=`<line x1="${x}" y1="${H-4}" x2="${x}" y2="${H}" stroke="#eee"/>`; }
+  notes.forEach(([a,d])=>{ if(a>=bpb) return; const x=a/bpb*W, w=Math.max(1.5, Math.min(d, bpb-a)/bpb*W-1.2);
+    g+=`<rect x="${x+0.3}" y="6" width="${w}" height="${H-12}" rx="1.5" fill="#3fb4ff"/>`; });
+  return g+`</svg>`;
+}
+function svgBateria(card){
+  const rows=[["crash","plat",["crash"]],["hh","charles/ride",["hh","oh","ride"]],["sn","caixa",["sn","ghost"]],["kk","bombo",["kk","ghostkk"]],["t","toms",["t1","t2","t3"]]];
+  const shown = rows.filter(r=>r[2].some(k=>(card[k]||[]).length));
+  const W=100, rh=7, H=shown.length*rh+1, N=card.grid;
+  let g=`<svg class="dg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:${Math.max(20,H*1.3)}px">`;
+  const bpbCols = N===12?3:4;
+  for(let b=0;b<=4;b++){ const x=b/4*W; g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#ddd"/>`; }
+  shown.forEach((r,i)=>{ const y=i*rh+1;
+    r[2].forEach(k=>(card[k]||[]).forEach(pos=>{ const x=pos/N*W, w=W/N-0.8, ghost=k.startsWith("ghost"), col = k==="kk"||k==="ghostkk"?"#3fb4ff":k==="sn"||k==="ghost"?"#79cf5a":k.startsWith("t")?"#b08968":k==="crash"?"#f4a261":"#ffd23f";
+      g+=`<rect x="${x+0.4}" y="${y}" width="${w}" height="${rh-1.5}" rx="1" fill="${col}" opacity="${ghost?0.4:1}"/>`; })); });
+  return g+`</svg>`;
+}
+function svgContorn(card, bpb){
+  const W=100, H=26; let g=`<svg class="tl" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  for(let b=0;b<=bpb;b++){ const x=b/bpb*W; g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#ddd"/>`; }
+  const nFr=card.contour.length, maxH=Math.max(...card.contour.flat(),1);
+  card.contour.forEach((fr,fi)=>{ const pts=fr.map((h,ni)=>{ const x=(fi+ (ni+0.5)/fr.length)/nFr*W, y=H-4-(h/maxH)*(H-8); return [x,y]; });
+    g+=`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="#222" stroke-width="1"/>`;
+    pts.forEach(([x,y])=>g+=`<circle cx="${x}" cy="${y}" r="1.8" fill="#fff" stroke="#222" stroke-width="0.8"/>`); });
+  return g+`</svg>`;
+}
+function diagram(card, row){
+  const bpb = beatsPerBar();
+  if(row.id==="bateria") return svgBateria(card);
+  if(isMelodic(card)) return svgContorn(card, bpb);
+  if(card.notes) return svgRitme(card, bpb);
+  return "";
+}
+
+/* ---------- modal cartes ---------- */
+let mc = null;
+function openCardModal(col,row){
+  mc={col,row};
+  const deck = deckFor(row);
+  $("mcTitle").textContent = `${row.nom} · ${col.sec}`;
+  $("mcSub").textContent = (row.nomesVisual ? "Marca si en aquesta part hi ha veu (no sona a l'app: la canteu vosaltres)." :
+    row.id==="bateria" ? "Tria el patró de bateria d'aquesta part." : `Tria el patró rítmic (${song.metrica}) que farà el ${row.nom.toLowerCase()} sobre cada acord.`) + (row.nomesVisual ? "" : " El diagrama de sota cada carta mostra com la llegeix l'app.");
+  const gal = $("mcGal"); gal.innerHTML="";
+  const cur = col.cells[row.id];
+  const addGroup = (title)=>{ const h=document.createElement("h4"); h.textContent=title; gal.appendChild(h); };
+  const addCards = (cards, kind)=> cards.forEach(card=>{
+    const o = document.createElement("div"); o.className="opt"+(card.id===cur?" sel":"")+(kind?" "+kind:"");
+    const lbl = row.id==="bateria" ? `<b>${card.num}</b>${card.title?'<br>'+card.title:''}` : card.text ? `<span style="font-family:monospace">${card.text}</span>` : card.nom || card.id;
+    o.innerHTML = `<div class="im"><img src="${card.img}" loading="lazy" alt=""></div>${diagram(card,row)}<div style="margin-top:4px">${lbl}</div>`;
+    o.onclick=()=>{ col.cells[row.id]=card.id; closeModals(); changed(); };
+    gal.appendChild(o);
+  });
+  const none = document.createElement("div"); none.className="opt special"+(!cur?" sel":""); none.textContent="🔇 Silenci (no toca)"; none.onclick=()=>{ delete col.cells[row.id]; closeModals(); changed(); }; gal.appendChild(none);
+  const dice = document.createElement("div"); dice.className="opt special"; dice.textContent="🎲 A l'atzar"; dice.onclick=()=>{ col.cells[row.id]=randomCard(row); closeModals(); changed(); }; gal.appendChild(dice);
+  if(row.baralla==="ritme"){
+    addGroup("Patró rítmic · toca l'acord sencer amb aquest ritme"); addCards(deck, "ritme");
+    addGroup("Contorn melòdic · arpegia les notes de l'acord seguint el dibuix"); addCards(D.MELODIC, "melodic");
+  } else addCards(deck, row.id==="veu" ? "veu" : "");
+  $("modalCards").classList.add("open");
+}
+/* ---------- modal acords de columna ---------- */
+let mpCol=null;
+function openProgModal(col){
+  mpCol=col;
+  const sel=$("mpSel"); sel.innerHTML = D.PROGRESSIONS.map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
+  const cur = col.prog || song.prog; const preset = D.PROGRESSIONS.find(p=>p.prog===cur);
+  sel.value = preset ? preset.prog : "custom"; $("mpCustom").style.display = preset ? "none" : ""; $("mpCustom").value = preset ? "" : cur;
+  $("mpChips").innerHTML = chipsHTML(cur);
+  $("modalProg").classList.add("open");
+}
+function mpCurrent(){ return $("mpSel").value==="custom" ? $("mpCustom").value : $("mpSel").value; }
+function closeModals(){ document.querySelectorAll(".modal").forEach(m=>m.classList.remove("open")); }
+
+/* ---------- persistència ---------- */
+function changed(){
+  renderMarc(); renderGrid();
+  try{ localStorage.setItem("rockin-creacio", JSON.stringify(song)); }catch(e){}
+  if(playing){ buildTimeline(); if(nextIdx>=timeline.length) nextIdx=0; }
+}
+function encodeSong(){ return btoa(unescape(encodeURIComponent(JSON.stringify(song)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function decodeSong(s){ s=s.replace(/-/g,"+").replace(/_/g,"/"); return JSON.parse(decodeURIComponent(escape(atob(s)))); }
+function loadSong(obj){
+  if(!obj || !Array.isArray(obj.cols)) throw new Error("Format desconegut");
+  song = Object.assign(defaultSong(), obj);
+  song.cols = song.cols.map(c=>Object.assign(newCol(), c));
+  // neteja: treu cartes que no pertanyen a la fila (p. ex. d'una versió anterior de l'app)
+  song.cols.forEach(c=>ROWS.forEach(r=>{ if(c.cells[r.id] && !findCard(r, c.cells[r.id])) delete c.cells[r.id]; }));
+  changed();
+}
+
+/* ---------- init ---------- */
+function init(){
+  $("key").innerHTML = KEYS.map(([v,n])=>`<option value="${v}">${n} major</option>`).join("");
+  $("progSel").innerHTML = D.PROGRESSIONS.map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
+
+  document.querySelectorAll("#metrica button").forEach(b=>b.onclick=()=>{ song.metrica=b.dataset.v; changed(); restartIfPlaying(); });
+  $("bpm").oninput = e=>{ song.bpm=+e.target.value; $("bpmLbl").textContent=song.bpm+" bpm"; };
+  $("bpm").onchange = ()=>changed();
+  $("key").onchange = e=>{ song.key=e.target.value; changed(); };
+  $("progSel").onchange = e=>{ if(e.target.value==="custom"){ $("progCustomWrap").style.display=""; $("progCustom").focus(); } else { song.prog=e.target.value; changed(); } };
+  $("progCustom").oninput = e=>{ if(parseProg(e.target.value,song.key).length){ song.prog=e.target.value.trim(); $("progChips").innerHTML=chipsHTML(song.prog); renderGrid(); } else $("progChips").innerHTML=chipsHTML(e.target.value); };
+  $("progCustom").onchange = ()=>changed();
+
+  $("btnRandom").onclick = randomSong;
+  $("btnRandomFill").onclick = ()=>{ if(!song.cols.length) addColumn(); song.cols.forEach(c=>randomizeColumn(c,false)); changed(); };
+  $("btnAddCol").onclick = addColumn;
+  $("btnClear").onclick = ()=>{ if(confirm("Buidar tota la graella?")){ song.cols=[]; changed(); } };
+  $("btnPlay").onclick = ()=> playing ? stop() : play();
+  $("vol").oninput = e=>{ if(master) master.gain.value=(+e.target.value)/100; };
+  document.addEventListener("keydown", e=>{ if(/^Digit[1-9]$/.test(e.code) && !["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName) && !document.querySelector(".modal.open")){ const ci=+e.code.slice(5)-1; if(ci<song.cols.length) jumpTo(ci); }
+    if(e.code==="Space" && !["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName) && !document.querySelector(".modal.open")){ e.preventDefault(); playing?stop():play(); } if(e.key==="Escape") closeModals(); });
+
+  document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click", e=>{ if(e.target===m) closeModals(); }));
+  document.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModals);
+  $("mpSel").onchange = ()=>{ $("mpCustom").style.display = $("mpSel").value==="custom" ? "" : "none"; $("mpChips").innerHTML=chipsHTML(mpCurrent()); };
+  $("mpCustom").oninput = ()=>{ $("mpChips").innerHTML=chipsHTML(mpCurrent()); };
+  $("mpGlobal").onclick = ()=>{ mpCol.prog=null; closeModals(); changed(); };
+  $("mpOk").onclick = ()=>{ const p=mpCurrent().trim(); if(parseProg(p,song.key).length){ mpCol.prog = (p===song.prog) ? null : p; closeModals(); changed(); } else alert("No entenc aquesta progressió."); };
+
+  $("btnSave").onclick = ()=>{ const a=document.createElement("a"); a.download=`canco-rockin-${new Date().toISOString().slice(0,10)}.json`; a.href="data:application/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(song,null,2)); a.click(); };
+  $("btnLoad").onclick = ()=>$("fileLoad").click();
+  $("fileLoad").onchange = e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ loadSong(JSON.parse(r.result)); }catch(err){ alert("No s'ha pogut carregar: "+err.message); } }; r.readAsText(f); e.target.value=""; };
+  $("btnLink").onclick = async ()=>{ const url = location.origin+location.pathname+"#c="+encodeSong(); history.replaceState(null,"",url); try{ await navigator.clipboard.writeText(url); alert("Enllaç copiat al porta-retalls. Qui l'obri veurà aquesta cançó."); }catch(e){ prompt("Copia aquest enllaç:", url); } };
+  $("btnExport").onclick = async ()=>{
+    const target=$("grid"); const canvas = await html2canvas(target,{backgroundColor:"#fff",scale:2,useCORS:true});
+    const a=document.createElement("a"); a.download=`creacio-rockin-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.png`; a.href=canvas.toDataURL("image/png"); a.click();
+  };
+
+  // càrrega: enllaç > últim estat guardat > proposta nova
+  let loaded=false;
+  const h = location.hash.match(/#c=([A-Za-z0-9_\-]+)/);
+  if(h){ try{ loadSong(decodeSong(h[1])); loaded=true; }catch(e){ console.warn(e); } }
+  if(!loaded){ try{ const s=localStorage.getItem("rockin-creacio"); if(s){ loadSong(JSON.parse(s)); loaded=true; } }catch(e){} }
+  if(!loaded || !song.cols.length){ randomSong(); }
+  changed();
+}
+init();
+</script>
+</body>
+</html>
