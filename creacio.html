@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Rockin · Creació</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=3"></script>
+<script src="dades.js?v=5"></script>
 <style>
   :root{
     --bg:#f6f7f9; --text:#222; --muted:#6b6f76; --accent:#ffcc00; --accent-dark:#e6b800;
@@ -358,16 +358,31 @@ function pluckBuffer(midi){
   }
   KS.set(midi, buf); return buf;
 }
+// Guitarra elèctrica: cordes pinçades → ampli amb una mica de distorsió (crunch) → "caixa" de l'ampli
+let gtrBus=null, gtrBusAC=null;
+function guitarBus(){
+  if(gtrBus && gtrBusAC===AC) return gtrBus;
+  const inp = AC.createGain(); inp.gain.value = 1;
+  const pre = AC.createBiquadFilter(); pre.type="highpass"; pre.frequency.value=110;
+  const drive = AC.createGain(); drive.gain.value = 4.5;
+  const shaper = AC.createWaveShaper(); const N=2048, curve=new Float32Array(N);
+  for(let i=0;i<N;i++){ const x=i/(N-1)*2-1; curve[i]=Math.tanh(2.2*x)/Math.tanh(2.2); }
+  shaper.curve=curve; shaper.oversample="4x";
+  const mid = AC.createBiquadFilter(); mid.type="peaking"; mid.frequency.value=900; mid.Q.value=0.8; mid.gain.value=5;
+  const cab = AC.createBiquadFilter(); cab.type="lowpass"; cab.frequency.value=4200; cab.Q.value=0.7;
+  const cab2 = AC.createBiquadFilter(); cab2.type="lowpass"; cab2.frequency.value=6000;
+  const out = AC.createGain(); out.gain.value = 0.22;
+  inp.connect(pre); pre.connect(drive); drive.connect(shaper); shaper.connect(mid); mid.connect(cab); cab.connect(cab2); cab2.connect(out); out.connect(master);
+  gtrBus=inp; gtrBusAC=AC; return inp;
+}
 function pluck(t, midi, dur, gain){
   const s = AC.createBufferSource(); s.buffer = pluckBuffer(midi);
-  const f = AC.createBiquadFilter(); f.type="lowpass"; f.frequency.value = 5200;
-  const body = AC.createBiquadFilter(); body.type="peaking"; body.frequency.value=180; body.gain.value=4; body.Q.value=1; // "caixa" de la guitarra
-  const g = AC.createGain(); const end = t + Math.min(Math.max(0.2, dur), 2.0);
-  g.gain.setValueAtTime(gain, t); g.gain.setValueAtTime(gain, end-0.05); g.gain.exponentialRampToValueAtTime(0.0001, end+0.08);
-  s.connect(f); f.connect(body); body.connect(g); g.connect(master); s.start(t); s.stop(end+0.15);
+  const g = AC.createGain(); const end = t + Math.min(Math.max(0.15, dur*0.95), 2.0);
+  g.gain.setValueAtTime(gain, t); g.gain.setValueAtTime(gain, end-0.04); g.gain.exponentialRampToValueAtTime(0.0001, end+0.05);
+  s.connect(g); g.connect(guitarBus()); s.start(t); s.stop(end+0.1);
 }
 function guitarStrum(t, midis, dur){
-  midis.forEach((m,i)=> pluck(t+i*0.012, m, dur, 0.62));
+  midis.forEach((m,i)=> pluck(t+i*0.010, m, dur, 0.5));
 }
 // Teclat: piano elèctric tipus Rhodes (síntesi FM: la "tina" metàl·lica s'apaga ràpid i queda el cos càlid)
 function keysNote(t, m, dur, gain){
@@ -436,7 +451,7 @@ function scheduleBar(ev, t0){
         frase.forEach((h,ni)=>{
           const t = t0 + fi*frDur + ni*nDur, m = base + arp[Math.min(h, arp.length-1)];
           if(row.id==="baix") bassNote(t, m, nDur);
-          else if(row.id==="guitarra") pluck(t, m, nDur*1.4, 0.75);
+          else if(row.id==="guitarra") pluck(t, m, nDur*1.1, 0.8);
           else keysNote(t, m, nDur*1.2, 0.26);
         });
       });
@@ -449,7 +464,7 @@ function scheduleBar(ev, t0){
       if(row.id==="baix"){
         bassNote(t, rBaix, dur); // sempre la fonamental
       }else if(row.id==="guitarra"){
-        guitarStrum(t, [rGuit, rGuit+ch.tones[2], rGuit+12, rGuit+12+ch.tones[1], rGuit+12+ch.tones[2]], dur);
+        guitarStrum(t, [rGuit, rGuit+ch.tones[2], rGuit+12, rGuit+12+ch.tones[1]], dur);
       }else if(row.id==="teclat"){
         keysChord(t, ch.tones.map(x=>rTecl+x), dur);
       }
@@ -639,7 +654,7 @@ async function previewRow(row){
   const t = AC.currentTime+0.05, ch = parseChord("I", song.key), beat = 60/song.bpm;
   if(row.id==="bateria"){ const c = D.BATERIA[0]; const step=beat/4; ["hh","sn","kk"].forEach(k=>(c[k]||[]).forEach(p=>DRUM[k](t+p*step))); }
   else if(row.id==="baix"){ [0,1,2,3].forEach(i=>bassNote(t+i*beat, 36+ch.root, beat)); }
-  else if(row.id==="guitarra"){ const r=52+((ch.root-4+12)%12); [0,1,2,3].forEach(i=>guitarStrum(t+i*beat, [r,r+7,r+12,r+16,r+19], beat)); }
+  else if(row.id==="guitarra"){ const r=52+((ch.root-4+12)%12); [0,1,2,3].forEach(i=>guitarStrum(t+i*beat, [r,r+7,r+12,r+16], beat)); }
   else if(row.id==="teclat"){ const r=53+((ch.root-5+12)%12); [0,1,2,3].forEach(i=>keysChord(t+i*beat, ch.tones.map(x=>r+x), beat)); }
 }
 
