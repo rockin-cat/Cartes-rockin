@@ -1,0 +1,5 @@
+Sons de la carpeta "sons/"
+==========================
+Mostres del soundfont FluidR3_GM (Frank Wen), distribuïdes sota llicència MIT:
+- baix, guitarra, guitarra_dist, rhodes, piano: https://github.com/gleitz/midi-js-soundfonts (MIT, Benjamin Gleitzman)
+- bateria: https://github.com/surikov/webaudiofontdata (MIT, Sergey Surikov)

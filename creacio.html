@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Rockin · Creació</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=9"></script>
+<script src="dades.js?v=10"></script>
 <style>
   :root{
     --bg:#f6f7f9; --text:#222; --muted:#6b6f76; --accent:#ffcc00; --accent-dark:#e6b800;
@@ -104,6 +104,7 @@
   .strip .panw{ width:100%; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--muted); }
   .strip .panw input{ width:78px; }
   .strip .ms2{ display:flex; gap:5px; }
+  .strip select.snd{ width:100%; font-size:11px; padding:3px 4px; border-radius:8px; }
   .strip .ms2 button{ width:30px; height:26px; padding:0; border-radius:8px; font-size:12px; font-weight:800; background:#fff; border:1px solid var(--border); color:#555; }
   .strip .ms2 button.on.mute{ background:#dc3545; color:#fff; border-color:transparent; }
   .strip .ms2 button.on.solo{ background:#ffcc00; color:#222; border-color:transparent; }
@@ -194,9 +195,14 @@
 
 <!-- ============ 3. MESCLADOR ============ -->
 <div class="panel">
-  <h2><span class="num">3</span> Mesclador <button class="ghost" id="mixReset" style="margin-left:auto;font-size:12px;padding:5px 10px">Restableix</button></h2>
+  <h2><span class="num">3</span> Mesclador
+    <span id="loadInfo" style="font-size:12px;font-weight:500;color:var(--muted);margin-left:8px"></span>
+    <label style="margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px">Sons
+      <select id="sonsMode" style="padding:5px 8px;font-size:12px"><option value="mostres">Instruments gravats</option><option value="sintesi">Sintetitzats</option></select>
+    </label>
+    <button class="ghost" id="mixReset" style="font-size:12px;padding:5px 10px">Restableix</button></h2>
   <div class="mixer" id="mixer"></div>
-  <p class="hint">Puja o baixa el volum de cada instrument, gira el <b>panorama</b> (esquerra–dreta) i silencia (<b>M</b>) o deixa sol (<b>S</b>) qualsevol pista. Els canvis se senten a l'instant i es guarden amb la cançó.</p>
+  <p class="hint">Puja o baixa el volum de cada instrument, gira el <b>panorama</b> (esquerra–dreta) i silencia (<b>M</b>) o deixa sol (<b>S</b>) qualsevol pista. Tria el so de la guitarra (neta, crunch o distorsió) i del teclat (piano elèctric o piano). Els sons són mostres gravades d'instruments reals (soundfont FluidR3, llicència MIT); si no es poden carregar, sona una versió sintetitzada. Els canvis se senten a l'instant i es guarden amb la cançó.</p>
 </div>
 
 <div class="footer">Eina sota llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank">CC BY-NC-SA 4.0</a> · Rockin</div>
@@ -252,7 +258,7 @@ let solo = { bateria:false, teclat:false, veu:false, baix:false, guitarra:false 
 // una fila sona si no està silenciada i (no hi ha cap solo, o ella és solo)
 function rowSilent(id){ const anySolo = Object.values(solo).some(Boolean); return muted[id] || (anySolo && !solo[id]); }
 
-function defaultMix(){ return { master:{vol:80}, bateria:{vol:80,pan:0}, teclat:{vol:80,pan:-0.3}, baix:{vol:80,pan:0}, guitarra:{vol:80,pan:0.3} }; }
+function defaultMix(){ return { master:{vol:80}, bateria:{vol:80,pan:0}, teclat:{vol:80,pan:-0.3}, baix:{vol:80,pan:0}, guitarra:{vol:80,pan:0.3}, sons:{ mode:"mostres", guitarra:"crunch", teclat:"rhodes" } }; }
 function defaultSong(){
   return { metrica:"binari", bpm:100, key:"C", prog:"I V vi IV", cols:[], mix:defaultMix() };
 }
@@ -340,6 +346,7 @@ function audio(){
   master.connect(comp); comp.connect(AC.destination);
   noiseBuf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
   const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  if(SAMPLES.status==="fetched" || Object.keys(SAMPLES.raw).length) decodeSamples();
   return AC;
 }
 const mtof = m => 440*Math.pow(2,(m-69)/12);
@@ -356,7 +363,7 @@ function noise(t, dur, filterType, freq, q, gain, decay){
   const g = AC.createGain(); g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(0.0001,t+decay);
   s.connect(f); f.connect(g); g.connect(OUT()); s.start(t); s.stop(t+decay+0.05);
 }
-const DRUM = {
+const DRUM_SYNTH = {
   kk(t,v=1){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine";
     o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12);
     g.gain.setValueAtTime(1.1*v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.45);
@@ -365,19 +372,19 @@ const DRUM = {
   sn(t,v=1){ noise(t,0.2,"bandpass",1900,0.7,0.9*v,0.22); noise(t,0.2,"highpass",4000,1,0.35*v,0.12);
     const o=AC.createOscillator(), g=AC.createGain(); o.type="triangle"; o.frequency.setValueAtTime(230,t); o.frequency.exponentialRampToValueAtTime(150,t+0.08);
     g.gain.setValueAtTime(0.5*v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.15); o.connect(g); g.connect(OUT()); o.start(t); o.stop(t+0.2); },
-  ghost(t){ DRUM.sn(t,0.28); },
+  ghost(t){ DRUM_SYNTH.sn(t,0.28); },
   hh(t,v=1){ noise(t,0.06,"highpass",7500,1,0.35*v,0.06); },
   oh(t){ noise(t,0.4,"highpass",6500,1,0.35,0.4); },
   ride(t){ noise(t,0.5,"bandpass",5200,2,0.25,0.5); noise(t,0.1,"highpass",9000,1,0.15,0.08); },
   crash(t){ noise(t,1.4,"highpass",3500,0.5,0.45,1.4); },
   t1(t){ tom(t,260); }, t2(t){ tom(t,180); }, t3(t){ tom(t,120); },
-  ghostkk(t){ DRUM.kk(t,0.4); },
+  ghostkk(t){ DRUM_SYNTH.kk(t,0.4); },
 };
 function tom(t,f){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine";
   o.frequency.setValueAtTime(f*1.4,t); o.frequency.exponentialRampToValueAtTime(f,t+0.1);
   g.gain.setValueAtTime(0.9,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.4); o.connect(g); g.connect(OUT()); o.start(t); o.stop(t+0.45); noise(t,0.05,"lowpass",1500,1,0.3,0.05); }
 
-function bassNote(t, midi, dur){
+function bassSynth(t, midi, dur){
   const o=AC.createOscillator(), o2=AC.createOscillator(), f=AC.createBiquadFilter(), g=AC.createGain();
   o.type="sawtooth"; o2.type="sine"; o.frequency.value=mtof(midi); o2.frequency.value=mtof(midi);
   // filtre una mica més obert: els harmònics fan que el baix se senti també en altaveus petits (portàtil, projector)
@@ -424,7 +431,7 @@ function guitarBus(){
   inp.connect(pre); pre.connect(drive); drive.connect(shaper); shaper.connect(mid); mid.connect(cab); cab.connect(cab2); cab2.connect(out); out.connect(bus("guitarra").g);
   gtrBus=inp; gtrBusAC=AC; return inp;
 }
-function pluck(t, midi, dur, gain){
+function pluckSynth(t, midi, dur, gain){
   const s = AC.createBufferSource(); s.buffer = pluckBuffer(midi);
   const g = AC.createGain(); const end = t + Math.min(Math.max(0.15, dur*0.95), 2.0);
   g.gain.setValueAtTime(gain, t); g.gain.setValueAtTime(gain, end-0.04); g.gain.exponentialRampToValueAtTime(0.0001, end+0.05);
@@ -434,7 +441,7 @@ function guitarStrum(t, midis, dur){
   midis.forEach((m,i)=> pluck(t+i*0.010, m, dur, 0.5));
 }
 // Teclat: piano elèctric tipus Rhodes (síntesi FM: la "tina" metàl·lica s'apaga ràpid i queda el cos càlid)
-function keysNote(t, m, dur, gain){
+function keysSynth(t, m, dur, gain){
   const f0 = mtof(m), end = t + Math.max(0.2, dur*0.95), vel = Math.min(1, gain/0.25);
   const car = AC.createOscillator(), mod = AC.createOscillator(), modG = AC.createGain();
   car.type="sine"; car.frequency.value=f0;
@@ -447,6 +454,95 @@ function keysNote(t, m, dur, gain){
   env(g, t, 0.004, gain, 0.9, gain*0.35, 0.25, end);
   car.connect(g); body.connect(bodyG); bodyG.connect(g); g.connect(OUT());
   [car,mod,body].forEach(o=>{ o.start(t); o.stop(end+0.4); });
+}
+/* ============================================================
+   SONS GRAVATS (mostres del soundfont FluidR3, carpeta sons/)
+   Si les mostres no s'han pogut carregar (p. ex. obrint el fitxer en local), sona la síntesi.
+   ============================================================ */
+const NOTE_NAMES=["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const noteName = m => NOTE_NAMES[((m%12)+12)%12] + (Math.floor(m/12)-1);
+const SAMPLE_SETS = { bateria:["kk","sn","hh","oh","ride","crash","t1","t2","t3","stick"], baix:[28,64], guitarra:[40,95], guitarra_dist:[40,95], rhodes:[41,101], piano:[41,101] };
+const SAMPLES = { raw:{}, buf:{}, status:"idle", total:0, done:0, decoded:0 };
+function sampleKeys(){
+  const out=[];
+  for(const [set,def] of Object.entries(SAMPLE_SETS)){
+    if(Array.isArray(def) && typeof def[0]==="string") def.forEach(n=>out.push(`${set}/${n}`));
+    else for(let m=def[0]; m<=def[1]; m++) out.push(`${set}/${noteName(m)}`);
+  }
+  return out;
+}
+async function prefetchSamples(){
+  if(SAMPLES.status!=="idle" || location.protocol==="file:") return;
+  const keys = sampleKeys(); SAMPLES.status="loading"; SAMPLES.total=keys.length; SAMPLES.done=0;
+  let i=0;
+  async function worker(){
+    while(i<keys.length){
+      const k = keys[i++];
+      try{ const r = await fetch("sons/"+k+".mp3"); if(r.ok) SAMPLES.raw[k] = await r.arrayBuffer(); }catch(e){}
+      SAMPLES.done++; updateLoadUI();
+    }
+  }
+  await Promise.all(Array.from({length:6}, worker));
+  SAMPLES.status = Object.keys(SAMPLES.raw).length ? "fetched" : "failed";
+  updateLoadUI(); if(AC) decodeSamples();
+}
+let decoding=false;
+async function decodeSamples(){
+  if(!AC || decoding) return; decoding=true;
+  for(const [k,raw] of Object.entries(SAMPLES.raw)){
+    if(SAMPLES.buf[k] && SAMPLES.buf[k].ctx===AC) continue;
+    try{ const b = await AC.decodeAudioData(raw.slice(0)); SAMPLES.buf[k] = { ctx:AC, b }; SAMPLES.decoded++; }catch(e){}
+  }
+  decoding=false; updateLoadUI();
+}
+function sample(k){ const e = SAMPLES.buf[k]; return (e && e.ctx===AC) ? e.b : null; }
+function useSamples(){ return song.mix.sons.mode !== "sintesi"; }
+function updateLoadUI(){
+  const el = document.getElementById("loadInfo"); if(!el) return;
+  if(SAMPLES.status==="loading") el.textContent = `Carregant sons gravats… ${Math.round(SAMPLES.done/SAMPLES.total*100)}%`;
+  else if(SAMPLES.status==="failed") el.textContent = "No s'han pogut carregar els sons gravats: sona la síntesi.";
+  else el.textContent = "";
+}
+// nota gravada: la mostra sona sencera fins a la durada demanada i s'apaga suaument
+function playSample(k, t, gain, dur, rel, out){
+  const b = sample(k); if(!b) return false; rel = rel || 0.02;
+  const s = AC.createBufferSource(); s.buffer=b;
+  const g = AC.createGain(); g.gain.setValueAtTime(gain, t);
+  let end = t + b.duration;
+  if(dur){ end = Math.min(end, t+dur); g.gain.setValueAtTime(gain, Math.max(t, end-0.005)); g.gain.linearRampToValueAtTime(0.0001, end+rel); }
+  s.connect(g); g.connect(out||OUT()); s.start(t); s.stop(end+rel+0.05); return true;
+}
+// transposa a l'octava més propera dins del rang de mostres
+function inRange(m, set){ const [lo,hi]=SAMPLE_SETS[set]; while(m<lo) m+=12; while(m>hi) m-=12; return m; }
+
+const DRUM_GAIN = { kk:0.9, sn:0.75, hh:0.5, oh:0.45, ride:0.5, crash:0.55, t1:0.7, t2:0.7, t3:0.7, stick:0.6 };
+const DRUM = {};
+["kk","sn","hh","oh","ride","crash","t1","t2","t3"].forEach(k=>{
+  DRUM[k] = (t,v=1)=>{ if(useSamples() && playSample("bateria/"+k, t, DRUM_GAIN[k]*v)) return; DRUM_SYNTH[k](t,v); };
+});
+DRUM.ghost = t => { if(useSamples() && playSample("bateria/sn", t, DRUM_GAIN.sn*0.3)) return; DRUM_SYNTH.ghost(t); };
+DRUM.ghostkk = t => { if(useSamples() && playSample("bateria/kk", t, DRUM_GAIN.kk*0.45)) return; DRUM_SYNTH.ghostkk(t); };
+
+function bassNote(t, midi, dur){
+  if(useSamples() && playSample("baix/"+noteName(inRange(midi,"baix")), t, 5.5, Math.max(0.1, dur*0.95), 0.06)) return;
+  bassSynth(t, midi, dur);
+}
+function pluck(t, midi, dur, gain){
+  if(useSamples()){
+    const kind = song.mix.sons.guitarra;   // neta | crunch | dist
+    const set = kind==="dist" ? "guitarra_dist" : "guitarra";
+    const out = kind==="crunch" ? guitarBus() : null;
+    const g = gain * (kind==="crunch" ? 2.8 : kind==="dist" ? 4.5 : 6);
+    if(playSample(set+"/"+noteName(inRange(midi,set)), t, g, Math.min(Math.max(0.15, dur), 2.5), 0.08, out)) return;
+  }
+  pluckSynth(t, midi, dur, gain);
+}
+function keysNote(t, m, dur, gain){
+  if(useSamples()){
+    const set = song.mix.sons.teclat==="piano" ? "piano" : "rhodes";
+    if(playSample(set+"/"+noteName(inRange(m,set)), t, gain*(set==="piano"?19:11), Math.max(0.2, dur), 0.15)) return;
+  }
+  keysSynth(t, m, dur, gain);
 }
 function keysChord(t, midis, dur){ midis.forEach(m=>keysNote(t, m, dur, 0.24)); }
 
@@ -765,7 +861,11 @@ function renderMixer(){
       <div class="fad"><input class="vfader" type="range" min="0" max="100" value="${m.vol}" title="Volum"><div class="meter"><i></i></div></div>
       <div class="val">${m.vol}</div>
       <div class="panw"><input type="range" min="-100" max="100" step="5" value="${Math.round(m.pan*100)}" title="Panorama (doble clic = centre)"><span>${panLabel(m.pan)}</span></div>
-      <div class="ms2"><button class="mute${muted[row.id]?' on':''}" title="Mute">M</button><button class="solo${solo[row.id]?' on':''}" title="Solo">S</button></div>`;
+      <div class="ms2"><button class="mute${muted[row.id]?' on':''}" title="Mute">M</button><button class="solo${solo[row.id]?' on':''}" title="Solo">S</button></div>
+      ${row.id==="guitarra" ? `<select class="snd" title="So de la guitarra"><option value="neta">Elèctrica neta</option><option value="crunch">Elèctrica crunch</option><option value="dist">Distorsió</option></select>` : ""}
+      ${row.id==="teclat" ? `<select class="snd" title="So del teclat"><option value="rhodes">Piano elèctric</option><option value="piano">Piano</option></select>` : ""}`;
+    const snd = st.querySelector(".snd");
+    if(snd){ snd.value = song.mix.sons[row.id]; snd.onchange = ()=>{ song.mix.sons[row.id]=snd.value; saveLocal(); previewRow(row); }; }
     st.querySelector("img").onclick=()=>previewRow(row);
     const vf=st.querySelector(".vfader"), vl=st.querySelector(".val");
     vf.oninput=()=>{ m.vol=+vf.value; vl.textContent=m.vol; applyMix(row.id); };
@@ -787,6 +887,7 @@ function renderMixer(){
   mf.onchange=saveLocal;
   ms.dataset.row="master"; box.appendChild(ms);
   $("vol").value = song.mix.master.vol;
+  $("sonsMode").value = song.mix.sons.mode;
 }
 // mesuradors de nivell
 let masterAn=null;
@@ -942,6 +1043,7 @@ function loadSong(obj){
   if(!obj || !Array.isArray(obj.cols)) throw new Error("Format desconegut");
   song = Object.assign(defaultSong(), obj);
   song.mix = Object.assign(defaultMix(), obj.mix||{});
+  song.mix.sons = Object.assign(defaultMix().sons, (obj.mix&&obj.mix.sons)||{});
   song.cols = song.cols.map(c=>Object.assign(newCol(), c));
   // neteja: treu cartes que no pertanyen a la fila (p. ex. d'una versió anterior de l'app)
   song.cols.forEach(c=>ROWS.forEach(r=>{ if(c.cells[r.id] && !findCard(r, c.cells[r.id])) delete c.cells[r.id]; }));
@@ -963,6 +1065,8 @@ function init(){
   $("progCustom").onchange = ()=>changed();
 
   $("btnRandom").onclick = randomSong;
+  $("sonsMode").onchange = e=>{ song.mix.sons.mode=e.target.value; saveLocal(); };
+  prefetchSamples();
   $("mixReset").onclick = ()=>{ song.mix=defaultMix(); Object.keys(muted).forEach(k=>muted[k]=false); Object.keys(solo).forEach(k=>solo[k]=false); renderGrid(); renderMixer(); applyAllMix(); saveLocal(); };
   requestAnimationFrame(meterLoop);
   $("btnRandomFill").onclick = ()=>{ if(!song.cols.length) addColumn(); song.cols.forEach(c=>randomizeColumn(c,false)); changed(); };
