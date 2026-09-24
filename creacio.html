@@ -5,50 +5,52 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Rockin · Creació</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=13"></script>
+<script src="dades.js?v=15"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
-    --rk-groc:#f8b727; --rk-groc-fosc:#e0a415; --rk-negre:#1a1a1a; --rk-gris:#d6d6d6; --rk-paper:#f4f3ef;
-    --rk-menta:#b7d6c3; --rk-menta-fosc:#1f6a58; --rk-cel:#bcd7f1; --rk-rosa:#e6b6d7; --rk-lila:#d9c6ea; --rk-oliva:#d6d3a7;
-    --bg:var(--rk-paper); --text:var(--rk-negre); --muted:#6b6b66; --accent:var(--rk-groc); --accent-dark:var(--rk-groc-fosc);
-    --panel:#fff; --border:rgba(0,0,0,.12); --pink:var(--rk-rosa); --blue:#3fb4ff; --green:#79cf5a;
+    /* Imatge de marca ROCKIN (com rockin.cat, el Generador de diagrames i l'Entrenament auditiu) */
+    --rk-groc:#FDBE10; --rk-groc-fosc:#e5aa05; --rk-tinta:#221F20; --rk-fons:#FAF8F3; --rk-suau:#F4F1EA; --rk-linia:#E2DDD3; --rk-gris:#6B6461;
+    --rk-negre:var(--rk-tinta); --rk-menta-fosc:#1f6a58; --rk-rosa:#e6b6d7;
+    --bg:var(--rk-fons); --text:var(--rk-tinta); --muted:var(--rk-gris); --accent:var(--rk-groc); --accent-dark:var(--rk-groc-fosc);
+    --panel:#fff; --border:var(--rk-linia); --pink:var(--rk-rosa); --blue:#3fb4ff; --green:#79cf5a;
     --cell-w:150px; --cell-h:104px;
-    --font-title:"Oswald", "Arial Narrow", sans-serif; --font-body:"Open Sans", system-ui, sans-serif;
+    --font-title:"Lora", Georgia, serif; --font-body:"Ubuntu", Helvetica, Arial, sans-serif;
   }
   *{ box-sizing:border-box; }
   body{ font-family:var(--font-body); background:var(--bg); color:var(--text); margin:0; padding:0 16px 110px; }
-  /* ===== Capçalera de marca ===== */
-  .brand{ display:flex; align-items:center; gap:18px; padding:14px 0 10px; border-bottom:3px solid var(--rk-negre); margin-bottom:6px; position:relative; overflow:hidden; }
-  .brand .logo{ font-family:var(--font-title); font-weight:700; font-size:34px; letter-spacing:.5px; line-height:1; text-decoration:none; color:var(--rk-negre); }
-  .brand .logo b{ color:var(--rk-groc); font-weight:700; }
-  .brand .tag{ font-family:var(--font-body); font-size:12px; color:var(--muted); margin-top:2px; }
-  .brand .tag i{ font-style:normal; color:var(--rk-groc); font-weight:700; }
-  .brand .tool{ font-family:var(--font-title); font-weight:600; font-size:26px; text-transform:uppercase; letter-spacing:1px; padding-left:18px; border-left:2px solid var(--rk-gris); line-height:1.1; }
-  .brand .tool small{ display:block; font-family:var(--font-body); font-size:12px; text-transform:none; letter-spacing:0; font-weight:400; color:var(--muted); }
-  .brand nav{ margin-left:auto; display:flex; gap:8px; }
-  .brand nav a{ font-size:13px; font-weight:600; color:var(--rk-negre); text-decoration:none; background:#fff; border:1px solid var(--border); padding:7px 12px; border-radius:999px; }
-  .brand nav a:hover{ background:var(--rk-groc); border-color:transparent; }
-  .brand .r{ position:absolute; right:-10px; top:-30px; font-family:var(--font-title); font-weight:700; font-size:120px; color:rgba(0,0,0,.05); pointer-events:none; user-select:none; }
-  h2{ font-family:var(--font-title); text-transform:uppercase; letter-spacing:.6px; font-size:17px; font-weight:600; margin:0 0 10px; display:flex; align-items:center; gap:10px; }
-  h2 .num{ display:inline-grid; place-items:center; width:26px; height:26px; border-radius:999px; background:var(--rk-groc); font-size:14px; font-family:var(--font-title); }
-  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:14px; box-shadow:0 8px 20px rgba(0,0,0,.05); padding:14px; margin-top:14px; }
+  /* ===== Barra de marca (idèntica a la resta d'eines Rockin) ===== */
+  body{ padding-top:68px; }
+  .topbar{ position:fixed; top:0; left:0; right:0; height:68px; z-index:1500; background:var(--rk-groc); color:var(--rk-tinta); display:flex; align-items:center; gap:16px; padding:0 20px; }
+  .topbar .brand{ display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit; }
+  .topbar .brand img{ height:44px; width:auto; display:block; }
+  .topbar .brand span{ font-weight:500; font-size:14px; text-transform:uppercase; letter-spacing:.08em; opacity:.8; }
+  .topbar nav{ margin-left:auto; display:flex; gap:8px; }
+  .topbar nav a{ font-size:13px; font-weight:500; color:var(--rk-groc); background:var(--rk-tinta); text-decoration:none; padding:8px 14px; border-radius:2px; letter-spacing:.03em; }
+  .topbar nav a:hover{ filter:brightness(1.15); }
+  h2{ font-family:var(--font-title); font-size:19px; font-weight:700; letter-spacing:-.01em; margin:0 0 10px; display:flex; align-items:center; gap:10px; }
+  h2 .num{ display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--rk-tinta); color:var(--rk-groc); font-size:13px; font-family:var(--font-body); font-weight:700; }
+  .panel{ background:var(--panel); border:1px solid var(--rk-linia); border-radius:4px; box-shadow:none; padding:16px; margin-top:16px; }
   .row{ display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-end; }
-  label.f{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); font-weight:600; }
-  select, input[type=text], input[type=number]{ font-size:14px; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#fff; color:var(--text); min-width:0; }
+  label.f{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--rk-gris); font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+  select, input[type=text], input[type=number]{ font-family:inherit; font-size:14px; padding:8px 10px; border-radius:2px; border:1px solid var(--rk-linia); background:#fff; color:var(--text); min-width:0; }
+  select:focus, input:focus{ outline:2px solid var(--rk-groc); outline-offset:0; border-color:var(--rk-tinta); }
   input[type=range]{ width:160px; }
-  button{ font-family:var(--font-body); font-size:14px; padding:9px 13px; border-radius:10px; border:none; background:var(--accent); font-weight:700; cursor:pointer; color:var(--rk-negre); }
+  button{ font-family:var(--font-body); font-size:14px; padding:9px 13px; border-radius:2px; border:none; background:var(--rk-tinta); font-weight:700; cursor:pointer; color:var(--rk-groc); }
+  button:hover{ filter:brightness(1.15); background:var(--rk-tinta); }
   button:hover{ background:var(--accent-dark); }
-  button.ghost{ background:#fff; border:1px solid var(--border); font-weight:600; }
-  button.ghost:hover{ background:#f1f1f1; }
-  button.danger{ background:#dc3545; color:#fff; }
+  button.ghost{ background:#fff; border:2px solid var(--rk-linia); font-weight:500; color:var(--rk-tinta); }
+  button.ghost:hover{ background:var(--rk-suau); filter:none; }
+  button.danger{ background:#dc3545; color:#fff; } button.danger:hover{ background:#dc3545; }
   button.blue{ background:#007bff; color:#fff; }
   button.blue:hover{ background:#0062cc; }
-  .seg{ display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
-  .seg button{ border-radius:0; background:#fff; font-weight:600; padding:8px 12px; }
-  .seg button.on{ background:var(--accent); }
+  .seg{ display:inline-flex; border:1px solid var(--rk-linia); border-radius:2px; overflow:hidden; }
+  .seg button{ border-radius:0; background:#fff; color:var(--rk-tinta); font-weight:500; padding:8px 12px; }
+  .seg button:hover{ background:var(--rk-suau); filter:none; }
+  .seg button.on{ background:var(--rk-tinta); color:var(--rk-groc); font-weight:700; }
   .chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
   .chip{ background:#eef2f6; border-radius:999px; padding:4px 10px; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
   .chip.roman{ background:#fdf0cc; }
@@ -57,11 +59,11 @@
   /* ===== GRAELLA ===== */
   .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
   .toolbar .sp{ flex:1; }
-  .gridWrap{ overflow:auto; border:2px dashed rgba(0,0,0,.18); border-radius:14px; background:#fff; padding:10px; }
+  .gridWrap{ overflow:auto; border:2px dashed rgba(0,0,0,.18); border-radius:4px; background:#fff; padding:10px; }
   .grid{ display:grid; gap:6px; width:max-content; grid-auto-flow:column; }
-  .rowHead{ width:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:12px; background:#f7f8fa; height:var(--cell-h); position:relative; }
+  .rowHead{ width:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:4px; background:#f7f8fa; height:var(--cell-h); position:relative; }
   .rowHead img{ height:56px; width:auto; border-radius:6px; }
-  .rowHead .nm{ font-family:var(--font-title); font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+  .rowHead .nm{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--rk-gris); }
   .rowHead .ms{ position:absolute; top:4px; right:4px; display:flex; flex-direction:column; gap:3px; }
   .rowHead .ms button{ width:24px; height:22px; border-radius:7px; padding:0; font-size:11px; font-weight:800; background:#fff; border:1px solid var(--border); color:#555; }
   .rowHead .ms button.on.mute{ background:#dc3545; color:#fff; border-color:transparent; }
@@ -69,8 +71,8 @@
   .rowHead.silent img, .rowHead.silent .nm{ opacity:.4; }
   .corner{ width:120px; height:78px; display:flex; align-items:flex-end; justify-content:center; font-size:11px; color:var(--muted); padding-bottom:6px; text-align:center; }
   .col{ display:contents; }
-  .colHead{ width:var(--cell-w); height:78px; border-radius:12px; background:var(--pink); padding:6px; display:flex; flex-direction:column; gap:4px; position:relative; }
-  .colHead select.sec{ font-family:var(--font-title); font-weight:600; letter-spacing:.5px; font-size:14px; padding:4px 6px; border-radius:8px; background:rgba(255,255,255,.7); border:none; text-transform:uppercase; }
+  .colHead{ width:var(--cell-w); height:78px; border-radius:4px; background:var(--pink); padding:6px; display:flex; flex-direction:column; gap:4px; position:relative; }
+  .colHead select.sec{ font-family:var(--font-title); font-weight:700; font-size:14px; padding:4px 6px; border-radius:2px; background:rgba(255,255,255,.75); border:none; text-transform:uppercase; }
   .colHead .sub{ display:flex; gap:4px; align-items:center; }
   .colHead .sub select{ font-size:12px; padding:3px 4px; border-radius:8px; background:rgba(255,255,255,.7); border:none; }
   .colHead .acords{ flex:1; font-size:11px; background:rgba(255,255,255,.7); border:none; border-radius:8px; padding:3px 6px; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
@@ -81,7 +83,7 @@
   .colHead .bars{ display:flex; gap:3px; margin-top:auto; }
   .colHead .bar{ flex:1; height:5px; border-radius:3px; background:rgba(0,0,0,.15); }
   .colHead .bar.on{ background:#222; }
-  .cell{ width:var(--cell-w); height:var(--cell-h); border-radius:12px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; overflow:hidden; border:2px solid transparent; }
+  .cell{ width:var(--cell-w); height:var(--cell-h); border-radius:4px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; overflow:hidden; border:2px solid transparent; }
   .cell:hover{ border-color:var(--rk-groc); }
   .cell img{ max-width:100%; max-height:100%; object-fit:contain; display:block; pointer-events:none; }
   .cell.empty{ background:repeating-linear-gradient(45deg,#f6f7f9 0 8px,#eef0f3 8px 16px); }
@@ -94,27 +96,27 @@
   .rowHead img:hover{ transform:scale(1.06); }
   .colHead .jump{ position:absolute; left:-6px; top:-8px; width:24px; height:24px; padding:0; border-radius:999px; font-size:11px; background:#fff; border:1px solid var(--border); }
   .colHead .jump:hover{ background:var(--accent); }
-  .gal h4{ grid-column:1/-1; margin:10px 0 0; font-family:var(--font-title); text-transform:uppercase; letter-spacing:.5px; font-weight:600; font-size:13px; color:var(--rk-negre); border-bottom:2px solid var(--rk-groc); padding-bottom:4px; }
+  .gal h4{ grid-column:1/-1; margin:10px 0 0; font-family:var(--font-title); font-weight:700; font-size:15px; color:var(--rk-tinta); border-bottom:2px solid var(--rk-groc); padding-bottom:4px; }
   .cell .lbl{ position:absolute; left:4px; bottom:3px; font-size:10px; background:rgba(255,255,255,.85); padding:1px 5px; border-radius:6px; max-width:92%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cell .x{ position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:999px; padding:0; font-size:11px; background:rgba(255,255,255,.9); border:1px solid var(--border); opacity:0; }
   .cell:hover .x{ opacity:1; }
-  .cell .now{ position:absolute; inset:0; border:3px solid var(--blue); border-radius:12px; pointer-events:none; opacity:0; }
+  .cell .now{ position:absolute; inset:0; border:3px solid var(--blue); border-radius:4px; pointer-events:none; opacity:0; }
   .grid.playing .col.playing .cell .now, .grid.playing .col.playing .cell .now{ opacity:1; }
   .col.playing .colHead{ outline:3px solid var(--blue); }
-  .addCol{ width:60px; height:78px; border-radius:12px; border:2px dashed var(--border); background:#fff; font-size:24px; color:#999; }
+  .addCol{ width:60px; height:78px; border-radius:4px; border:2px dashed var(--border); background:#fff; font-size:24px; color:#999; }
   .addCol:hover{ border-color:var(--accent); color:#222; background:#fff; }
 
   /* ===== MESCLADOR ===== */
   .mixer{ display:flex; gap:10px; overflow-x:auto; padding:4px 2px 8px; }
-  .strip{ width:96px; flex:0 0 auto; background:#f7f8fa; border:1px solid var(--border); border-radius:14px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .strip{ width:96px; flex:0 0 auto; background:#f7f8fa; border:1px solid var(--border); border-radius:4px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:8px; }
   .strip.master{ background:#fdf0cc; }
   .strip.off{ opacity:.55; }
   .strip img{ height:44px; border-radius:6px; }
-  .strip .nm{ font-family:var(--font-title); font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+  .strip .nm{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--rk-gris); }
   .strip .fad{ display:flex; gap:8px; align-items:stretch; height:170px; }
   .strip input.vfader{ writing-mode:vertical-lr; direction:rtl; width:26px; height:170px; accent-color:#222; cursor:pointer; }
   .strip .meter{ width:10px; height:170px; border-radius:5px; background:#e6e8ec; position:relative; overflow:hidden; }
-  .strip .meter i{ position:absolute; left:0; right:0; bottom:0; height:0%; background:linear-gradient(to top,#3fb4ff 0%,#79cf5a 55%,#ffcc00 80%,#dc3545 100%); background-size:100% 170px; background-position:bottom; transition:height .05s linear; }
+  .strip .meter i{ position:absolute; left:0; right:0; bottom:0; height:0%; background:linear-gradient(to top,#3fb4ff 0%,#79cf5a 60%,#ffcc00 88%,#dc3545 93%,#dc3545 100%); background-size:100% 170px; background-position:bottom; transition:height .05s linear; }
   .strip .val{ font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
   .strip .panw{ width:100%; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--muted); }
   .strip .panw input{ width:78px; }
@@ -126,10 +128,10 @@
 
   /* ===== TRANSPORT ===== */
   .transport{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--border); box-shadow:0 -8px 24px rgba(0,0,0,.08); padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; z-index:50; }
-  .transport .play{ width:56px; height:56px; border-radius:999px; font-size:22px; padding:0; }
+  .transport .play{ width:56px; height:56px; border-radius:50%; font-size:22px; padding:0; background:var(--rk-groc); color:var(--rk-tinta); } .transport .play:hover{ background:var(--rk-groc-fosc); filter:none; }
   .transport .pos{ font-variant-numeric:tabular-nums; font-size:14px; min-width:220px; }
-  .transport .pos b{ font-family:var(--font-title); font-size:19px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
-  .transport .chord{ font-family:var(--font-title); font-size:30px; font-weight:700; min-width:70px; text-align:center; background:var(--rk-groc); border-radius:12px; padding:4px 12px; }
+  .transport .pos b{ font-family:var(--font-title); font-size:19px; font-weight:700; }
+  .transport .chord{ font-family:var(--font-title); font-size:30px; font-weight:700; min-width:70px; text-align:center; background:var(--rk-tinta); color:var(--rk-groc); border-radius:4px; padding:4px 12px; }
   .transport .beats{ display:flex; gap:5px; }
   .transport .beat{ width:14px; height:14px; border-radius:999px; background:#e3e6ea; }
   .transport .beat.on{ background:var(--blue); }
@@ -139,11 +141,11 @@
   /* ===== MODAL ===== */
   .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:100; align-items:center; justify-content:center; padding:16px; }
   .modal.open{ display:flex; }
-  .modalBox{ background:#fff; border-radius:14px; width:min(1000px,100%); max-height:92vh; overflow:auto; padding:20px; }
-  .modalBox h3{ margin:0 0 4px; font-family:var(--font-title); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+  .modalBox{ background:#fff; border-radius:4px; width:min(1000px,100%); max-height:92vh; overflow:auto; padding:20px; }
+  .modalBox h3{ margin:0 0 4px; font-family:var(--font-title); font-weight:700; font-size:22px; }
   .modalBox .sub{ color:var(--muted); font-size:13px; margin:0 0 12px; }
   .gal{ display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
-  .opt{ border:2px solid #e3e6ea; border-radius:10px; padding:6px; cursor:pointer; background:#fafafa; text-align:center; font-size:11px; transition:transform .1s; }
+  .opt{ border:2px solid #e3e6ea; border-radius:4px; padding:6px; cursor:pointer; background:#fafafa; text-align:center; font-size:11px; transition:transform .1s; }
   .opt:hover{ border-color:var(--accent); transform:scale(1.03); }
   .opt.sel{ border-color:var(--rk-menta-fosc); background:#e6f1ea; }
   .opt .im{ height:120px; overflow:hidden; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; }
@@ -155,19 +157,16 @@
   .opt.special{ display:flex; align-items:center; justify-content:center; min-height:140px; font-size:14px; font-weight:700; }
   .modalBox .foot{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
   .footer{ margin-top:30px; padding:18px 0 8px; border-top:1px solid var(--border); text-align:center; font-size:12px; color:var(--muted); line-height:1.6; }
-  .footer .logo{ font-family:var(--font-title); font-weight:700; font-size:20px; color:var(--rk-negre); text-decoration:none; }
-  .footer .logo b{ color:var(--rk-groc); }
+  .footer img{ height:34px; display:block; margin:0 auto 8px; }
   .footer a{ color:var(--rk-menta-fosc); }
   @media (max-width:700px){ :root{ --cell-w:120px; --cell-h:86px; } .transport .pos{ min-width:0; } }
 </style>
 </head>
 <body>
 
-<header class="brand">
-  <a class="logo" href="https://rockin.cat" target="_blank" rel="noopener"><b>ROCK</b>IN<div class="tag"><i>[r]</i>evolucionem la música</div></a>
-  <div class="tool">Creació <small>compondre és triar què sona a cada moment</small></div>
-  <nav><a href="index.html">Cartes Rockin</a></nav>
-  <div class="r">[r]</div>
+<header class="topbar">
+  <a class="brand" href="https://rockin.cat" target="_blank" rel="noopener"><img src="marca/rockin-logo-fosc.png" alt="Rockin"><span>Creació · compondre és triar què sona a cada moment</span></a>
+  <nav><a href="index.html">🃏 Cartes Rockin</a></nav>
 </header>
 
 <!-- ============ 1. MARC ============ -->
@@ -180,8 +179,8 @@
         <button data-v="ternari">Ternari (12/8)</button>
       </span>
     </label>
-    <label class="f">Tempo <span id="bpmLbl" style="color:#222">100 bpm</span>
-      <input type="range" id="bpm" min="50" max="180" value="100">
+    <label class="f">Tempo <span id="bpmLbl" style="color:#222">80 bpm</span>
+      <input type="range" id="bpm" min="50" max="180" value="80">
     </label>
     <label class="f">Tonalitat
       <select id="key"></select>
@@ -229,7 +228,7 @@
 </div>
 
 <div class="footer">
-  <a class="logo" href="https://rockin.cat" target="_blank" rel="noopener"><b>ROCK</b>IN</a><br>
+  <a href="https://rockin.cat" target="_blank" rel="noopener"><img src="marca/rockin-logo.png" alt="Rockin"></a>
   Creació © ROCKIN.CAT, SCCL · Eina subjecta a una llicència <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ca" target="_blank">Creative Commons Reconeixement-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0)</a><br>
   Sons: soundfonts FluidR3 i MusyngKite (llicència MIT).
 </div>
@@ -287,7 +286,7 @@ function rowSilent(id){ const anySolo = Object.values(solo).some(Boolean); retur
 
 function defaultMix(){ return { master:{vol:80}, bateria:{vol:80,pan:0}, teclat:{vol:80,pan:-0.3}, baix:{vol:80,pan:0}, guitarra:{vol:80,pan:0.3}, sons:{ mode:"mostres", guitarra:"acustica", teclat:"rhodes" } }; }
 function defaultSong(){
-  return { metrica:"binari", bpm:100, key:"C", prog:"I V vi IV", cols:[], mix:defaultMix() };
+  return { metrica:"binari", bpm:80, key:"C", prog:"I V vi IV", cols:[], mix:defaultMix() };
 }
 function newCol(sec){ return { sec: sec || "Estrofa", rep:1, prog:null, cells:{} }; }
 
@@ -345,21 +344,21 @@ function colChords(col){ const c = parseProg(colProgStr(col), song.key); return 
    MOTOR DE SO (Web Audio, tot sintetitzat)
    ============================================================ */
 let AC=null, master=null, noiseBuf=null, COMP=null, ROOM=null;
-const MASTER_TRIM = 0.55;   // marge perquè la suma de tots els instruments no saturi
+const MASTER_TRIM = 0.9;   // marge perquè la suma de tots els instruments no saturi
 // Sala: reverberació curta comuna (resposta d'impuls sintètica) perquè tot soni al mateix lloc
 function makeRoom(){
-  const sr=AC.sampleRate, len=Math.round(sr*1.1), ir=AC.createBuffer(2,len,sr);
+  const sr=AC.sampleRate, len=Math.round(sr*0.7), ir=AC.createBuffer(2,len,sr);
   for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++){ const x=i/len; d[i]=(Math.random()*2-1)*Math.pow(1-x,2.2)*Math.exp(-3*x); } }
   const conv=AC.createConvolver(); conv.buffer=ir;
   const inp=AC.createGain(); inp.gain.value=1;
   const lp=AC.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=4200;
   const hp=AC.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=250;
-  const out=AC.createGain(); out.gain.value=0.9;
+  const out=AC.createGain(); out.gain.value=0.7;
   inp.connect(hp); hp.connect(conv); conv.connect(lp); lp.connect(out); out.connect(master);
   return {inp,out};
 }
 // quantitat de sala per instrument (enviament)
-const ROOM_SEND = { bateria:0.10, teclat:0.14, baix:0.0, guitarra:0.16 };
+const ROOM_SEND = { bateria:0.035, teclat:0.05, baix:0.0, guitarra:0.06 };
 // equalització per canal: treu embussament greu i dona presència
 function channelEQ(id){
   const hp=AC.createBiquadFilter(); hp.type="highpass";
@@ -575,7 +574,7 @@ function playSample(k, t, gain, dur, rel, out, pan){
 // transposa a l'octava més propera dins del rang de mostres
 function inRange(m, set){ const [lo,hi]=SAMPLE_SETS[set]; while(m<lo) m+=12; while(m>hi) m-=12; return m; }
 
-const DRUM_GAIN = { kk:0.85, sn:0.7, hh:0.42, oh:0.38, ride:0.42, crash:0.45, t1:0.65, t2:0.65, t3:0.65, stick:0.55 };
+const DRUM_GAIN = { kk:0.5, sn:0.42, hh:0.25, oh:0.22, ride:0.25, crash:0.27, t1:0.4, t2:0.4, t3:0.4, stick:0.33 };
 const DRUM = {};
 ["kk","sn","hh","oh","ride","crash","t1","t2","t3"].forEach(k=>{
   DRUM[k] = (t,v=1)=>{ if(useSamples() && playSample("bateria/"+k, t, DRUM_GAIN[k]*v)) return; DRUM_SYNTH[k](t,v); };
@@ -584,14 +583,14 @@ DRUM.ghost = t => { if(useSamples() && playSample("bateria/sn", t, DRUM_GAIN.sn*
 DRUM.ghostkk = t => { if(useSamples() && playSample("bateria/kk", t, DRUM_GAIN.kk*0.45)) return; DRUM_SYNTH.ghostkk(t); };
 
 function bassNote(t, midi, dur){
-  if(useSamples() && playSample("baix/"+noteName(inRange(midi,"baix")), t, 5.5, Math.max(0.1, dur*0.95), 0.06)) return;
+  if(useSamples() && playSample("baix/"+noteName(inRange(midi,"baix")), t, 2.6, Math.max(0.1, dur*0.95), 0.06)) return;
   bassSynth(t, midi, dur);
 }
 // ---- Guitarra amb mostres: cordes que ressonen fins al següent rascat, i que aquest apaga ("choke") ----
 const GTR = { voices:[] };   // veus que encara sonen: {g, t}
 function gtrSet(){ const k=song.mix.sons.guitarra; return k==="dist" ? "guitarra_dist" : k==="acustica" ? "acustica" : "guitarra"; }
 function gtrOut(){ return song.mix.sons.guitarra==="crunch" ? guitarBus() : null; }
-function gtrGain(){ const k=song.mix.sons.guitarra; return k==="crunch" ? 4.2 : k==="dist" ? 3.0 : k==="acustica" ? 5.2 : 10; }
+function gtrGain(){ const k=song.mix.sons.guitarra; return k==="crunch" ? 1.5 : k==="dist" ? 1.05 : k==="acustica" ? 2.2 : 4.0; }
 // apaga les cordes que sonaven abans de l'instant t (com quan la mà torna a rascar)
 function gtrChoke(t, fade){
   GTR.voices = GTR.voices.filter(v=>v.t < t);
@@ -631,7 +630,7 @@ function guitarStrum(t, midis, dur){ strum(t, midis, "D", 1); }
 function keysNote(t, m, dur, gain){
   if(useSamples()){
     const set = song.mix.sons.teclat==="piano" ? "piano" : "rhodes";
-    if(playSample(set+"/"+noteName(inRange(m,set)), t, gain*(set==="piano"?19:11), Math.max(0.2, dur), 0.15)) return;
+    if(playSample(set+"/"+noteName(inRange(m,set)), t, gain*(set==="piano"?9.5:6.5), Math.max(0.2, dur), 0.15)) return;
   }
   keysSynth(t, m, dur, gain);
 }
@@ -1013,7 +1012,7 @@ function meterLoop(){
     const id=st.dataset.row; let an, buf;
     if(id==="master"){ an=masterAn; buf=masterAn._buf; } else { const b=BUS[id]; if(!b||b.ac!==AC) return; an=b.an; buf=b.buf; }
     an.getFloatTimeDomainData(buf); let pk=0; for(let i=0;i<buf.length;i++){ const v=Math.abs(buf[i]); if(v>pk) pk=v; }
-    const db = pk>0 ? 20*Math.log10(pk) : -90, h = Math.max(0, Math.min(100, (db+48)/48*100));
+    const db = pk>0 ? 20*Math.log10(pk) : -90, h = Math.max(0, Math.min(100, (db+42)/45*100));   // 0 dB = 93 %: només el tram vermell vol dir que satura
     const bar=st.querySelector(".meter i"); const prev=parseFloat(bar.style.height)||0;
     bar.style.height = (h>prev ? h : Math.max(h, prev-3)) + "%";
   });
