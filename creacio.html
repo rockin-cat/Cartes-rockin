@@ -8,7 +8,7 @@
 <link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=22"></script>
+<script src="dades.js?v=23"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
@@ -56,6 +56,8 @@
   .chip.roman{ background:#fdf0cc; }
   .chord-chip{ display:inline-flex; flex-direction:column; align-items:center; min-width:44px; padding:3px 10px 2px; border-radius:10px; background:var(--deg); color:var(--ink); border:2px solid var(--deg); line-height:1.1; font-weight:800; font-size:15px; }
   .chord-chip i{ font-style:normal; font-size:11px; font-weight:800; opacity:.8; }
+  .chord-chip.mini{ min-width:0; padding:1px 4px 0; border-radius:6px; border-width:1px; font-size:10px; line-height:1; }
+  .chord-chip.mini i{ font-size:8px; }
   #progChips{ align-self:flex-end; margin-bottom:2px; }
   .keystrip{ margin-top:12px; padding:10px 14px; background:var(--rk-suau); border:1px solid var(--rk-linia); border-radius:4px; }
   .keystrip-head{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; list-style:none; }
@@ -85,7 +87,7 @@
   .colHead select.sec{ font-family:var(--font-title); font-weight:700; font-size:14px; padding:4px 6px; border-radius:2px; background:rgba(255,255,255,.75); border:none; text-transform:uppercase; }
   .colHead .sub{ display:flex; gap:4px; align-items:center; }
   .colHead .sub select{ font-size:12px; padding:3px 4px; border-radius:8px; background:rgba(255,255,255,.7); border:none; }
-  .colHead .acords{ flex:1; font-size:11px; background:rgba(255,255,255,.7); border:none; border-radius:8px; padding:3px 6px; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
+  .colHead .acords{ flex:1; font-size:11px; background:rgba(255,255,255,.7); border:none; border-radius:8px; padding:2px 3px; text-align:left; white-space:nowrap; overflow:hidden; display:flex; gap:2px; }
   .colHead .acords.own{ background:#fdf0cc; }
   .colHead .acords i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:2px; vertical-align:middle; }
   .colHead .bar{ opacity:.55; } .colHead .bar.on{ opacity:1; }
@@ -118,6 +120,44 @@
   .addCol{ width:60px; height:78px; border-radius:4px; border:2px dashed var(--border); background:#fff; font-size:24px; color:#999; }
   .addCol:hover{ border-color:var(--accent); color:#222; background:#fff; }
 
+  /* ===== CARTES PRÒPIES ===== */
+  .ccard{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  .ccard svg{ width:100%; height:100%; display:block; }
+  .opt .im .ccard svg{ max-height:120px; }
+  .opt .edit{ position:absolute; top:4px; right:4px; width:22px; height:22px; padding:0; font-size:11px; border-radius:999px; background:#fff; border:1px solid var(--border); }
+  .opt{ position:relative; }
+  .opt.design{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:140px; font-size:14px; font-weight:700; border-style:dashed; background:#fff; }
+  .ds{ display:grid; gap:12px; }
+  .dsTop{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .dsTop label{ display:flex; flex-direction:column; gap:3px; font-size:12px; font-weight:600; color:var(--muted); }
+  .dsTop input[type=text]{ padding:6px 8px; font-size:14px; width:200px; }
+  .seg{ display:inline-flex; border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+  .seg button{ border:none; border-radius:0; background:#fff; color:#333; font-size:12px; padding:6px 10px; }
+  .seg button.on{ background:var(--rk-tinta); color:var(--rk-groc); }
+  .dsGrid{ display:grid; gap:3px; align-items:center; user-select:none; }
+  .dsGrid .lab{ font-size:11px; font-weight:700; color:var(--muted); text-align:right; padding-right:6px; white-space:nowrap; }
+  .dsGrid .pul{ font-family:var(--font-title); font-weight:700; font-size:15px; text-align:center; }
+  .dsGrid .st{ height:34px; border-radius:6px; background:#f0f1f3; cursor:pointer; position:relative; border:1px solid #e3e6ea; }
+  .dsGrid .st.b0{ border-left:2px solid #999; }
+  .dsGrid .st:hover{ background:#e6e8ec; }
+  .dsGrid .st.on{ background:var(--dot,#221F20); border-color:transparent; }
+  .dsGrid .st.on::after{ content:""; position:absolute; width:16px; height:16px; left:50%; top:50%; margin:-8px 0 0 -8px; border-radius:50%; background:#fff; opacity:.9; }
+  .dsGrid .st.hold{ background:var(--dot,#221F20); opacity:.45; border-color:transparent; }
+  .dsGrid .st.hold::after{ content:""; position:absolute; left:6px; right:6px; top:50%; height:3px; margin-top:-1px; background:#fff; border-radius:2px; }
+  .dsPreview{ width:220px; height:150px; background:#fff; border:1px solid var(--border); border-radius:6px; }
+  .dsHelp{ font-size:12px; color:var(--muted); line-height:1.5; }
+
+  /* ===== EXPRESSIVITAT (automatització de volum) ===== */
+  .laneHead{ width:120px; height:var(--lane-h); border-radius:4px; background:#f7f8fa; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:11px; font-weight:700; color:var(--rk-gris); text-transform:uppercase; letter-spacing:.03em; }
+  .laneHead select{ font-size:11px; padding:3px 4px; width:104px; border-radius:2px; text-transform:none; }
+  .laneHead button{ font-size:10px; padding:2px 8px; background:#fff; color:#555; border:1px solid var(--border); }
+  .lane{ width:var(--cell-w); height:var(--lane-h); border-radius:4px; background:#fafafa; border:1px solid #eee; position:relative; overflow:hidden; touch-action:none; }
+  .lane svg{ display:block; width:100%; height:100%; }
+  .lane .pt{ cursor:grab; }
+  .lane .pt:active{ cursor:grabbing; }
+  .lane .val{ font-size:9px; fill:#666; font-family:var(--font-body); pointer-events:none; }
+  :root{ --lane-h:74px; }
+
   /* ===== MESCLADOR ===== */
   .mixer{ display:flex; gap:10px; overflow-x:auto; padding:4px 2px 8px; }
   .strip{ width:96px; flex:0 0 auto; background:#f7f8fa; border:1px solid var(--border); border-radius:4px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:8px; }
@@ -143,7 +183,8 @@
   .transport .play{ width:56px; height:56px; border-radius:50%; font-size:22px; padding:0; background:var(--rk-groc); color:var(--rk-tinta); } .transport .play:hover{ background:var(--rk-groc-fosc); filter:none; }
   .transport .pos{ font-variant-numeric:tabular-nums; font-size:14px; min-width:220px; }
   .transport .pos b{ font-family:var(--font-title); font-size:19px; font-weight:700; }
-  .transport .chord{ font-family:var(--font-title); font-size:30px; font-weight:700; min-width:70px; text-align:center; background:var(--rk-tinta); color:var(--rk-groc); border-radius:4px; padding:4px 12px; }
+  .transport .chord{ font-family:var(--font-title); font-size:26px; font-weight:700; min-width:70px; text-align:center; background:var(--rk-tinta); color:var(--rk-groc); border-radius:4px; padding:3px 12px; display:flex; flex-direction:column; align-items:center; line-height:1.05; }
+  .transport .chord i{ font-style:normal; font-size:12px; font-family:var(--font-body); opacity:.85; }
   .transport .beats{ display:flex; gap:5px; }
   .transport .beat{ width:14px; height:14px; border-radius:999px; background:#e3e6ea; }
   .transport .beat.on{ background:var(--blue); }
@@ -228,7 +269,7 @@
     <input type="file" id="fileLoad" accept="application/json" style="display:none">
   </div>
   <div class="gridWrap" id="gridWrap"><div class="grid" id="grid"></div></div>
-  <p class="hint">Clica una casella per triar la carta (o deixar-la en silenci). Clica el nom d'una secció per canviar-lo, el <b>×N</b> per repetir la roda i els <b>acords</b> per donar a aquesta part una roda diferent. Teclat, guitarra i baix poden tocar un <b>patró rítmic</b> (l'acord sencer) o un <b>contorn melòdic</b> (arpegi amb notes de l'acord). El <b>▶</b> de cada part hi salta mentre sona (o tecles 1–9). Clica la icona d'un instrument per sentir-lo sol; <b>M</b> silencia una pista i <b>S</b> la deixa en solo (també al mesclador).</p>
+  <p class="hint">Clica una casella per triar la carta (o deixar-la en silenci). Clica el nom d'una secció per canviar-lo, el <b>×N</b> per repetir la roda i els <b>acords</b> per donar a aquesta part una roda diferent. Teclat, guitarra i baix poden tocar un <b>patró rítmic</b> (l'acord sencer) o un <b>contorn melòdic</b> (arpegi amb notes de l'acord). El <b>▶</b> de cada part hi salta mentre sona (o tecles 1–9). Clica la icona d'un instrument per sentir-lo sol; <b>M</b> silencia una pista i <b>S</b> la deixa en solo (també al mesclador). Dins de cada casella també pots <b>✎ dissenyar la teva carta</b> (ritme, contorn o patró de bateria): queda desada al navegador per a totes les cançons. La fila <b>🎚 Expressivitat</b> és una línia de volum per pista (com a Logic): clica per posar-hi punts, arrossega'ls per fer crescendos i decrescendos, doble clic per treure'n un.</p>
 </div>
 
 <!-- ============ 3. MESCLADOR ============ -->
@@ -270,6 +311,30 @@
   </div>
 </div>
 
+<!-- ============ MODAL DISSENY DE CARTES ============ -->
+<div class="modal" id="modalDesign">
+  <div class="modalBox" style="width:min(900px,100%)">
+    <h3 id="dsTitle">Dissenya una carta</h3>
+    <p class="sub" id="dsSub"></p>
+    <div class="ds">
+      <div class="dsTop">
+        <label>Nom de la carta<input type="text" id="dsNom" maxlength="24" placeholder="La meva carta"></label>
+        <label id="dsTipusWrap">Tipus<span class="seg" id="dsTipus"><button data-v="ritme" class="on">Patró rítmic</button><button data-v="melodic">Contorn melòdic</button></span></label>
+        <label id="dsSubWrap">Subdivisió<span class="seg" id="dsSubSeg"><button data-v="2">Corxeres</button><button data-v="4" class="on">Semicorxeres</button></span></label>
+        <span style="flex:1"></span>
+        <button class="ghost" id="dsClear" style="font-size:12px">Buida</button>
+        <button class="ghost" id="dsPlay" style="font-size:12px">▶ Prova-la</button>
+      </div>
+      <div class="dsGrid" id="dsGrid"></div>
+      <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap">
+        <div class="dsPreview" id="dsPreview"></div>
+        <p class="dsHelp" id="dsHelp"></p>
+      </div>
+    </div>
+    <div class="foot"><button class="danger" id="dsDel" style="margin-right:auto; display:none">🗑️ Elimina la carta</button><button class="ghost" data-close>Cancel·la</button><button id="dsOk">Desa i posa-la aquí</button></div>
+  </div>
+</div>
+
 <!-- ============ MODAL ACORDS COLUMNA ============ -->
 <div class="modal" id="modalProg">
   <div class="modalBox" style="width:min(520px,100%)">
@@ -302,9 +367,9 @@ function rowSilent(id){ const anySolo = Object.values(solo).some(Boolean); retur
 
 function defaultMix(){ return { master:{vol:80}, bateria:{vol:80,pan:0}, teclat:{vol:80,pan:-0.3}, baix:{vol:80,pan:0}, guitarra:{vol:80,pan:0.3}, sons:{ mode:"mostres", guitarra:"acustica", teclat:"rhodes" } }; }
 function defaultSong(){
-  return { metrica:"binari", bpm:80, key:"C", minor:false, prog:"I V vi IV", cols:[], mix:defaultMix() };
+  return { metrica:"binari", bpm:80, key:"C", minor:false, prog:"I V vi IV", cols:[], mix:defaultMix(), custom:[] };
 }
-function newCol(sec){ return { sec: sec || "Estrofa", rep:2, prog:null, cells:{} }; }
+function newCol(sec){ return { sec: sec || "Estrofa", rep:2, prog:null, cells:{}, auto:{} }; }
 
 /* ============================================================
    HARMONIA
@@ -317,10 +382,17 @@ const isMinorKey = () => !!song.minor;
 const HT_COLORS = ["#ec1c24","#f7a21b","#f5e616","#3fd11a","#4b52f5","#9d3fe3","#f2459a"];   // els mateixos que al llibre i al joc de teclat
 const HT_OUT = "#f3b3ef";               // acord fora de l'escala (bVII, etc.)
 function inkFor(hex){ const n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255; return 0.299*r+0.587*g+0.114*b > 150 ? "#1d1d1f" : "#ffffff"; }
+// Noms de nota en català (com al joc de teclat): C → Do, Am → La m, G7 → Sol7, Bdim → Si°
+const CAT_NOTE = { C:"Do", D:"Re", E:"Mi", F:"Fa", G:"Sol", A:"La", B:"Si" };
+function catName(n){
+  const m = /^([A-G])([#b]?)(.*)$/.exec(n||""); if(!m) return n;
+  const suf = m[3] ? (/^[0-9°+]/.test(m[3]) ? m[3] : " "+m[3]) : "";
+  return CAT_NOTE[m[1]] + m[2] + suf;
+}
 // fitxa d'acord com al joc de teclat: nom a dalt, grau a sota, color del grau
 function chordChipHTML(ch, extra){
   const c = chordColor(ch);
-  return `<span class="chord-chip${extra?' '+extra:''}" style="--deg:${c};--ink:${inkFor(c)}" title="${ch.name} · grau ${ch.roman}"><b>${ch.name}</b><i>${ch.roman}</i></span>`;
+  return `<span class="chord-chip${extra?' '+extra:''}" style="--deg:${c};--ink:${inkFor(c)}" title="${catName(ch.name)} · grau ${ch.roman}"><b>${catName(ch.name)}</b><i>${ch.roman}</i></span>`;
 }
 // els set acords de la tonalitat (per a la tira de colors)
 function keyChords(){
@@ -332,8 +404,8 @@ function keyChords(){
 const FUNCIONS = [ {nom:"Tònica", text:"casa: repòs", idx:[0,5,2]}, {nom:"Predominant", text:"s'allunya de casa", idx:[3,1]}, {nom:"Dominant", text:"tensió: vol tornar a casa", idx:[4,6]} ];
 function keyStripHTML(){
   const chords = keyChords(); const byIdx = {}; chords.forEach(c=>{ byIdx[MAJOR.indexOf(((c.root - (isMinorKey()?(keyRoot(song.key)+3)%12:keyRoot(song.key)))+12)%12)] = c; });
-  const keyName = (FLAT_KEYS.has(song.key)?NOTE_FLAT:NOTE_SHARP)[keyRoot(song.key)] + (isMinorKey()?" menor":" major");
-  return `<summary class="keystrip-head"><strong>🎨 Els colors dels acords · tonalitat de ${keyName}</strong><span class="keystrip-mini">${chords.map(c=>`<i style="background:${chordColor(c)}" title="${c.name}"></i>`).join("")}</span></summary>
+  const keyName = catName((FLAT_KEYS.has(song.key)?NOTE_FLAT:NOTE_SHARP)[keyRoot(song.key)]) + (isMinorKey()?" menor":" major");
+  return `<summary class="keystrip-head"><strong>🎨 Els colors dels acords · tonalitat de ${keyName}</strong><span class="keystrip-mini">${chords.map(c=>`<i style="background:${chordColor(c)}" title="${catName(c.name)}"></i>`).join("")}</span></summary>
     <p class="hint" style="margin:6px 0 10px">Cada acord té el color del seu grau, com al llibre: el mateix color vol dir la mateixa funció, en qualsevol cançó. El número romà és el grau (majúscula = acord major, minúscula = menor).</p>
     <div class="funcions">${FUNCIONS.map(f=>`<div class="funcio"><b>${f.nom}</b><small>${f.text}</small><div class="chips">${f.idx.map(i=>byIdx[i]).filter(Boolean).map(c=>chordChipHTML(c)).join("")}</div></div>`).join("")}</div>
     <p class="hint" style="margin-top:8px">Els acords de fora de la tonalitat (per exemple el <b>♭VII</b>) són <span style="background:${HT_OUT};padding:0 6px;border-radius:4px;color:#1d1d1f">rosa clar</span>.</p>`;
@@ -422,13 +494,14 @@ function channelEQ(id){
 }
 /* ---------- Mesclador: cada instrument té el seu canal (volum → panorama → mesurador) cap al màster ---------- */
 let curRow=null;                 // instrument que s'està programant ara mateix
+let masterAuto=null;             // gain de la línia d'expressivitat del màster
 const BUS={};                    // canals creats per a l'AC actual
 function bus(id){
   if(BUS[id] && BUS[id].ac===AC) return BUS[id];
-  const g=AC.createGain(), pan=AC.createStereoPanner(), an=AC.createAnalyser(), eq=channelEQ(id);
-  an.fftSize=512; g.connect(eq.inp); eq.out.connect(pan); pan.connect(an); an.connect(master);
-  if(ROOM && ROOM_SEND[id]){ const send=AC.createGain(); send.gain.value=ROOM_SEND[id]; pan.connect(send); send.connect(ROOM.inp); }
-  BUS[id]={ac:AC, g, pan, an, buf:new Float32Array(512)};
+  const g=AC.createGain(), pan=AC.createStereoPanner(), an=AC.createAnalyser(), eq=channelEQ(id), auto=AC.createGain();
+  an.fftSize=512; g.connect(eq.inp); eq.out.connect(pan); pan.connect(auto); auto.connect(an); an.connect(master);
+  if(ROOM && ROOM_SEND[id]){ const send=AC.createGain(); send.gain.value=ROOM_SEND[id]; auto.connect(send); send.connect(ROOM.inp); }
+  BUS[id]={ac:AC, g, pan, an, auto, buf:new Float32Array(512)};
   applyMix(id); return BUS[id];
 }
 function OUT(){ return curRow ? bus(curRow).g : master; }
@@ -449,8 +522,9 @@ function audio(){
   const LIM = AC.createDynamicsCompressor(); LIM.threshold.value=-2; LIM.knee.value=0; LIM.ratio.value=20; LIM.attack.value=0.001; LIM.release.value=0.08;
   const trim = AC.createGain(); trim.gain.value = 0.85;
   COMP.connect(LIM); LIM.connect(trim); trim.connect(AC.destination);
+  masterAuto = AC.createGain(); masterAuto.connect(COMP);   // línia d'expressivitat del màster
   master = AC.createGain(); master.gain.value = volToGain(song.mix.master.vol)*MASTER_TRIM;
-  master.connect(COMP);
+  master.connect(masterAuto);
   ROOM = makeRoom();
   noiseBuf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
   const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
@@ -753,13 +827,17 @@ function buildTimeline(){
     for(let r=0;r<col.rep;r++) chords.forEach((ch,i)=> timeline.push({ci, r, i, n:chords.length, chord:ch}));
   });
 }
+function customCards(){ return song.custom || (song.custom=[]); }
+// cartes pròpies que valen per a aquesta fila i la mètrica actual
+function customFor(row){ return customCards().filter(c => (row.baralla==="bateria" ? c.tipus==="bateria" : row.baralla==="ritme" && c.tipus!=="bateria") && c.metre===song.metrica); }
 function deckFor(row){
-  if(row.baralla==="ritme") return song.metrica==="binari" ? D.BINARI : D.TERNARI.filter(c=>c.metre===song.metrica);
+  if(row.baralla==="ritme") return (song.metrica==="binari" ? D.BINARI : D.TERNARI.filter(c=>c.metre===song.metrica)).concat(customFor(row).filter(c=>c.tipus==="ritme"));
   // bateria: cartes binàries per a 4/4 i 3/4, cartes de shuffle (tresets) per a 6/8, 9/8 i 12/8; sonen els pulsos que calen
-  if(row.baralla==="bateria") return D.BATERIA.filter(c => isCompound() ? c.grid===12 : c.grid!==12);
+  if(row.baralla==="bateria") return D.BATERIA.filter(c => isCompound() ? c.grid===12 : c.grid!==12).concat(customFor(row));
   return D.VEU;
 }
 function findCard(row, id){
+  const own = customCards().find(c=>c.id===id); if(own) return own;
   if(row.baralla==="ritme") return [...D.BINARI,...D.TERNARI,...D.MELODIC,...(row.id==="guitarra"?D.RASCATS:[])].find(c=>c.id===id) || null;
   if(row.baralla==="bateria") return D.BATERIA.find(c=>c.id===id) || null;
   return deckFor(row).find(c=>c.id===id) || null;
@@ -768,7 +846,9 @@ const isMelodic = card => !!(card && card.contour);
 const isStrum = card => !!(card && card.strum);
 // Una carta encaixa amb la mètrica? (binari: cartes mb + rascats; ternari: cartes mt). Els contorns melòdics no tenen mètrica.
 function fitsMetre(card){
-  if(!card || isMelodic(card) || card.id==="veu") return true;
+  if(!card || card.id==="veu") return true;
+  if(card.propia) return card.metre===song.metrica;
+  if(isMelodic(card)) return true;
   if(card.grid) return isCompound() ? card.grid===12 : card.grid!==12;   // bateria
   if(song.metrica==="binari") return isStrum(card) || D.BINARI.includes(card);
   return !isStrum(card) && card.metre===song.metrica;
@@ -778,7 +858,7 @@ function adaptToMetre(){
   let n=0;
   song.cols.forEach(c=>ROWS.forEach(r=>{
     if((r.baralla!=="ritme" && r.baralla!=="bateria") || !c.cells[r.id]) return;
-    const card = r.baralla==="bateria" ? D.BATERIA.find(x=>x.id===c.cells[r.id]) : findCard(r, c.cells[r.id]);
+    const card = findCard(r, c.cells[r.id]);
     if(!fitsMetre(card)){ const d = deckFor(r); c.cells[r.id] = d[Math.floor(Math.random()*d.length)].id; n++; }
   }));
   return n;
@@ -801,6 +881,9 @@ function playStrum(card, t0, beat, ch, rGuit){
 // repartides el més uniformement possible però sempre sobre la graella. Cada nota dura fins a la següent.
 function contourEvents(card, bpb){
   const notes = []; card.contour.forEach(fr=>fr.forEach(h=>notes.push(h)));
+  if(card.notes){   // carta pròpia: té el seu ritme
+    return card.notes.filter(n=>n[0]<bpb-1e-6).map((n,i)=>({t:n[0], d:Math.min(n[1], bpb-n[0]), h:notes[i]||0, k:i}));
+  }
   const n = notes.length; if(!n) return [];
   const div = n<=bpb ? 1 : metre().div;   // subdivisions per pols (corxeres, o tresets en compàs compost)
   const slots = bpb*div, out=[];
@@ -820,9 +903,16 @@ function scheduleBarInner(ev, t0){
     if(row.nomesVisual) return;
     const id = col.cells[row.id]; if(!id) return;
     const card = findCard(row,id); if(!card) return;
+    scheduleCard(row, card, ch, t0);
+  });
+}
+// programa una carta d'una fila sobre un acord a partir del temps t0
+function scheduleCard(row, card, ch, t0){
+  const beat = 60/song.bpm, bpb = beatsPerBar();
+  {
     curRow = row.id;
     if(row.id==="bateria"){
-      const perPulse = card.grid/4;             // 4 semicorxeres o 3 tresets per pols
+      const perPulse = card.sub || card.grid/4; // 4 semicorxeres o 3 tresets per pols (cartes pròpies: la seva subdivisió)
       const step = beat/perPulse;
       const maxPos = perPulse * bpb;            // en 3/4, 6/8 i 9/8 només sonen els primers pulsos de la carta
       ["hh","oh","ride","crash","sn","ghost","kk","ghostkk","t1","t2","t3"].forEach(k=>{
@@ -860,7 +950,7 @@ function scheduleBarInner(ev, t0){
         keysChord(t, ch.tones.map(x=>rTecl+x), dur);
       }
     });
-  });
+  }
 }
 
 function tick(){
@@ -872,6 +962,7 @@ function tick(){
     }
     const ev = timeline[nextIdx];
     scheduleBar(ev, nextTime);
+    scheduleAuto(ev, nextTime);
     uiQueue.push({time:nextTime, ev, dur:barDur()});
     nextTime += barDur(); nextIdx++;
   }
@@ -892,7 +983,7 @@ let curBar=null;
 function showPos(ev, time, dur){
   curBar={time,dur};
   const col = song.cols[ev.ci];
-  const nc = document.getElementById("nowChord"); nc.textContent = ev.chord.name; nc.style.background = chordColor(ev.chord); nc.style.color = chipStyle(ev.chord).includes("#222") ? "#222" : "#fff";
+  const nc = document.getElementById("nowChord"); nc.innerHTML = `<b>${catName(ev.chord.name)}</b><i>${ev.chord.roman}</i>`; nc.style.background = chordColor(ev.chord); nc.style.color = chipStyle(ev.chord).includes("#222") ? "#222" : "#fff";
   document.getElementById("nowPos").innerHTML = `<b>${col.sec}</b> ${col.rep>1?`(volta ${ev.r+1}/${col.rep})`:""}<br><span style="color:var(--muted)">compàs ${ev.i+1} de ${ev.n} · ${ev.chord.roman}</span>`;
   document.querySelectorAll("#grid .col").forEach((el,i)=>el.classList.toggle("playing", i===ev.ci));
   const head = document.querySelectorAll("#grid .colHead")[ev.ci];
@@ -922,7 +1013,8 @@ function killAudio(at){
   old.gain.cancelScheduledValues(now); old.gain.setValueAtTime(old.gain.value, now); old.gain.linearRampToValueAtTime(0.0001, now+0.02);
   setTimeout(()=>{ try{ old.disconnect(); }catch(e){} }, 120);
   // cadena nova: les notes que ja estaven programades queden penjades de la vella, que ja no sona
-  master = AC.createGain(); master.gain.value = volToGain(song.mix.master.vol)*MASTER_TRIM; master.connect(COMP);
+  master = AC.createGain(); master.gain.value = volToGain(song.mix.master.vol)*MASTER_TRIM; master.connect(masterAuto);
+  try{ masterAuto.gain.cancelScheduledValues(now); masterAuto.gain.setValueAtTime(1, now); }catch(e){}
   if(ROOM){ try{ ROOM.out.disconnect(); }catch(e){} } ROOM = makeRoom();
   Object.keys(BUS).forEach(k=>delete BUS[k]); gtrBus=null; masterAn=null; GTR.voices=[];
 }
@@ -974,7 +1066,7 @@ function chipsHTML(progStr){
 
 function renderGrid(){
   const g = $("grid"); g.innerHTML="";
-  g.style.gridTemplateRows = `78px repeat(${ROWS.length}, var(--cell-h))`;
+  g.style.gridTemplateRows = `78px repeat(${ROWS.length}, var(--cell-h)) var(--lane-h)`;
   // capçaleres de fila
   const c0 = document.createElement("div"); c0.className="corner"; c0.textContent="instrument ↓ / part →"; g.appendChild(c0);
   ROWS.forEach(row=>{
@@ -991,6 +1083,7 @@ function renderGrid(){
     }
     g.appendChild(h);
   });
+  g.appendChild(laneHeadEl());
   // columnes
   song.cols.forEach((col,ci)=>{
     const wrap = document.createElement("div"); wrap.className="col";
@@ -1000,7 +1093,7 @@ function renderGrid(){
       <select class="sec">${D.SECCIONS.map(s=>`<option ${s===col.sec?"selected":""}>${s}</option>`).join("")}</select>
       <div class="sub">
         <select class="rep" title="Quantes voltes de la roda">${[1,2,3,4].map(n=>`<option value="${n}" ${n===col.rep?"selected":""}>×${n}</option>`).join("")}</select>
-        <button class="acords ${col.prog?'own':''}" title="Acords d'aquesta part">${chords.map(c=>`<i style="background:${chordColor(c)}"></i>${c.name}`).join(" ")}</button>
+        <button class="acords ${col.prog?'own':''}" title="Acords d'aquesta part">${chords.map(c=>chordChipHTML(c,"mini")).join("")}</button>
       </div>
       <div class="bars">${chords.map(c=>`<div class="bar" style="background:${chordColor(c)}"></div>`).join("")}</div>
       <button class="jump" title="Salta a aquesta part (tecla ${ci+1})">▶</button>
@@ -1020,10 +1113,10 @@ function renderGrid(){
     ROWS.forEach(row=>{
       const id = col.cells[row.id];
       const card = id ? findCard(row,id) : null;
-      const cell = document.createElement("div"); cell.className="cell"+(id?"":" empty")+(row.id==="veu"?" veu":isMelodic(card)?" melodic":isStrum(card)?" rascat":row.baralla==="ritme"?" ritme":"");
+      const cell = document.createElement("div"); cell.className="cell"+(id?"":" empty")+(row.id==="veu"?" veu":(card&&card.propia)?" propia":isMelodic(card)?" melodic":isStrum(card)?" rascat":row.baralla==="ritme"?" ritme":"");
       if(id){
         if(card){
-          cell.innerHTML = `<img src="${card.img}" alt="${card.id}">` + (row.id==="bateria" ? `<span class="lbl">${card.num}${card.title?' · '+card.title:''}</span>` : "");
+          cell.innerHTML = cardImgHTML(card,row) + (row.id==="bateria" && !card.propia ? `<span class="lbl">${card.num}${card.title?' · '+card.title:''}</span>` : "");
         }else cell.innerHTML = `<span class="lbl">carta ${id} no trobada</span>`;
         const x = document.createElement("button"); x.className="x"; x.textContent="✕"; x.title="Buida";
         x.onclick = e=>{ e.stopPropagation(); delete col.cells[row.id]; changed(); };
@@ -1033,12 +1126,13 @@ function renderGrid(){
       cell.onclick = ()=>openCardModal(col,row);
       wrap.appendChild(cell);
     });
+    wrap.appendChild(laneEl(col, ci));
     g.appendChild(wrap);
   });
   // botó afegir
   const add = document.createElement("button"); add.className="addCol"; add.textContent="＋"; add.title="Afegeix una part";
   add.onclick = addColumn; g.appendChild(add);
-  for(let i=0;i<ROWS.length;i++){ const f=document.createElement("div"); g.appendChild(f); }
+  for(let i=0;i<=ROWS.length;i++){ const f=document.createElement("div"); g.appendChild(f); }
 }
 
 function colAction(ci, act){
@@ -1217,23 +1311,28 @@ function openCardModal(col,row){
   const deck = deckFor(row);
   $("mcTitle").textContent = `${row.nom} · ${col.sec}`;
   $("mcSub").textContent = (row.nomesVisual ? "Marca si en aquesta part hi ha veu (no sona a l'app: la canteu vosaltres)." :
-    row.id==="bateria" ? "Tria el patró de bateria d'aquesta part." : `Tria el patró rítmic (${metre().nom}) que farà el ${row.nom.toLowerCase()} sobre cada acord.`) + (row.nomesVisual ? "" : " El diagrama de sota cada carta mostra com la llegeix l'app.");
+    row.id==="bateria" ? "Tria el patró de bateria d'aquesta part." : `Tria el patró rítmic (${metre().nom}) que farà el ${row.nom.toLowerCase()} sobre cada acord.`);
   const gal = $("mcGal"); gal.innerHTML="";
   const cur = col.cells[row.id];
   const addGroup = (title)=>{ const h=document.createElement("h4"); h.textContent=title; gal.appendChild(h); };
   const addCards = (cards, kind)=> cards.forEach(card=>{
     const o = document.createElement("div"); o.className="opt"+(card.id===cur?" sel":"")+(kind?" "+kind:"");
-    const lbl = row.id==="bateria" ? `<b>${card.num}</b>${card.title?'<br>'+card.title:''}` : (card.nom || "");
-    o.innerHTML = `<div class="im"><img src="${card.img}" loading="lazy" alt=""></div>${diagram(card,row)}<div style="margin-top:4px">${lbl}</div>`;
+    const lbl = card.propia ? `✎ ${card.nom||"Carta pròpia"}` : row.id==="bateria" ? `<b>${card.num}</b>${card.title?'<br>'+card.title:''}` : (card.nom || "");
+    o.innerHTML = `<div class="im">${cardImgHTML(card,row)}</div><div style="margin-top:4px">${lbl}</div>`;
     o.onclick=()=>{ col.cells[row.id]=card.id; closeModals(); changed(); };
+    if(card.propia){ const e=document.createElement("button"); e.className="edit"; e.textContent="✎"; e.title="Edita aquesta carta"; e.onclick=ev=>{ ev.stopPropagation(); openDesigner(col,row,card); }; o.appendChild(e); }
     gal.appendChild(o);
   });
   const none = document.createElement("div"); none.className="opt special"+(!cur?" sel":""); none.textContent="🔇 Silenci (no toca)"; none.onclick=()=>{ delete col.cells[row.id]; closeModals(); changed(); }; gal.appendChild(none);
   const dice = document.createElement("div"); dice.className="opt special"; dice.textContent="🎲 A l'atzar"; dice.onclick=()=>{ col.cells[row.id]=randomCard(row); closeModals(); changed(); }; gal.appendChild(dice);
+  if(!row.nomesVisual){ const ds = document.createElement("div"); ds.className="opt design"; ds.innerHTML="✎ Dissenya la teva carta<small style='font-weight:400;color:var(--muted);margin-top:4px'>ritme"+(row.baralla==="ritme"?" o contorn":"")+" a la teva manera</small>"; ds.onclick=()=>openDesigner(col,row,null); gal.appendChild(ds); }
+  const own = customFor(row); if(own.length){ addGroup("Les teves cartes · dissenyades per vosaltres"); addCards(own, "propia"); }
   if(row.baralla==="ritme"){
     if(row.id==="guitarra" && song.metrica==="binari"){ addGroup("Rascat de guitarra · fletxa negra = toca, grisa = moviment sense tocar"); addCards(D.RASCATS, "rascat"); }
     addGroup("Patró rítmic · toca l'acord sencer amb aquest ritme"); addCards(deck, "ritme");
     addGroup("Contorn melòdic · arpegia les notes de l'acord seguint el dibuix"); addCards(D.MELODIC, "melodic");
+    // les cartes pròpies ja surten al seu grup; treiem-les del patró rítmic per no repetir-les
+    gal.querySelectorAll(".opt.ritme").forEach(o=>{ if(o.querySelector(".ccard")) o.remove(); });
   } else addCards(deck, row.id==="veu" ? "veu" : "");
   $("modalCards").classList.add("open");
 }
@@ -1254,7 +1353,7 @@ function closeModals(){ document.querySelectorAll(".modal").forEach(m=>m.classLi
 function changed(){
   adaptToMetre();   // garanteix que mai hi hagi cartes d'una altra mètrica a la graella
   renderMarc(); renderGrid(); renderMixer(); applyAllMix();
-  try{ localStorage.setItem("rockin-creacio", JSON.stringify(song)); }catch(e){}
+  try{ localStorage.setItem("rockin-creacio", JSON.stringify(song)); saveOwnCollection(); }catch(e){}
   if(playing){ buildTimeline(); if(nextIdx>=timeline.length) nextIdx=0; }
 }
 function encodeSong(){ return btoa(unescape(encodeURIComponent(JSON.stringify(song)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
@@ -1267,15 +1366,224 @@ function loadSong(obj){
   song.mix = Object.assign(defaultMix(), obj.mix||{});
   song.mix.sons = Object.assign(defaultMix().sons, (obj.mix&&obj.mix.sons)||{});
   song.cols = song.cols.map(c=>Object.assign(newCol(), c));
+  song.custom = Array.isArray(obj.custom) ? obj.custom.filter(c=>c && c.id && c.propia) : [];
+  mergeOwnCollection();
   // neteja: treu cartes que no pertanyen a la fila (p. ex. d'una versió anterior de l'app)
   song.cols.forEach(c=>ROWS.forEach(r=>{ if(c.cells[r.id] && !findCard(r, c.cells[r.id])) delete c.cells[r.id]; }));
   adaptToMetre();
   changed();
 }
 
+/* ============================================================
+   CARTES PRÒPIES: dissenyar-les i dibuixar-les
+   ============================================================ */
+const OWN_KEY = "rockin-cartes-propies";
+// la col·lecció personal viu al navegador: les cartes que dissenyes queden per a totes les cançons
+function mergeOwnCollection(){
+  try{ const col = JSON.parse(localStorage.getItem(OWN_KEY)||"[]"); col.forEach(c=>{ if(c && c.id && !customCards().some(x=>x.id===c.id)) customCards().push(c); }); }catch(e){}
+}
+function saveOwnCollection(){
+  try{ const col = JSON.parse(localStorage.getItem(OWN_KEY)||"[]"); const map={}; col.forEach(c=>map[c.id]=c); customCards().forEach(c=>map[c.id]=c); localStorage.setItem(OWN_KEY, JSON.stringify(Object.values(map))); }catch(e){}
+}
+function removeOwnCard(id){
+  song.custom = customCards().filter(c=>c.id!==id);
+  song.cols.forEach(c=>Object.keys(c.cells).forEach(k=>{ if(c.cells[k]===id) delete c.cells[k]; }));
+  try{ const col = JSON.parse(localStorage.getItem(OWN_KEY)||"[]").filter(c=>c.id!==id); localStorage.setItem(OWN_KEY, JSON.stringify(col)); }catch(e){}
+}
+function cardImgHTML(card, row){
+  if(card.img) return `<img src="${card.img}" loading="lazy" alt="${card.id}">`;
+  return `<div class="ccard">${svgOwnCard(card)}</div>`;
+}
+// dibuix "estil carta" d'una carta pròpia
+const DRUM_INK = { crash:"#f4a261", hh:"#ffd23f", oh:"#ffd23f", ride:"#ffd23f", sn:"#e63946", ghost:"#79cf5a", kk:"#3fb4ff", ghostkk:"#3fb4ff", t1:"#b08968", t2:"#b08968", t3:"#b08968" };
+function svgOwnCard(card){
+  const M = METRES[card.metre] || METRES.binari, bpb = M.bpb, sub = card.sub || (M.div===3?3:4), N = bpb*sub;
+  const W=300, H=200, x0=24, x1=W-24, y0=54, pw=(x1-x0)/bpb;
+  let g=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="${W-3}" height="${H-3}" rx="14" fill="#fff" stroke="#221F20" stroke-width="3"/>`;
+  g+=`<text x="${x0}" y="24" font-family="Ubuntu,Arial,sans-serif" font-size="11" font-weight="700" fill="#6B6461">${(card.nom||"CARTA PRÒPIA").toUpperCase()}</text>`;
+  g+=`<text x="${x1}" y="24" text-anchor="end" font-family="Ubuntu,Arial,sans-serif" font-size="11" font-weight="700" fill="#6B6461">${M.nom}</text>`;
+  for(let b=0;b<bpb;b++){ const cx=x0+b*pw+pw/2; g+=`<text x="${cx}" y="${y0-8}" text-anchor="middle" font-family="Lora,Georgia,serif" font-size="18" font-weight="700" fill="#221F20">${b+1}</text>`; }
+  for(let b=0;b<=bpb;b++){ const x=x0+b*pw; g+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${H-22}" stroke="#221F20" stroke-width="${b===0||b===bpb?2:1}" stroke-dasharray="${b===0||b===bpb?'':'3 3'}"/>`; }
+  const sw=(x1-x0)/N;
+  if(card.tipus==="bateria"){
+    const rows=["crash","hh","oh","sn","ghost","kk","t1"].filter(k=>(card[k]||[]).length);
+    const rh=(H-22-y0)/Math.max(rows.length,3);
+    rows.forEach((k,i)=>{ const cy=y0+rh*(i+0.5);
+      (card[k]||[]).forEach(p=>{ const cx=x0+(p+0.5)*sw; const ghost=k==="ghost"||k==="ghostkk";
+        if(k==="oh") g+=`<circle cx="${cx}" cy="${cy}" r="${Math.min(sw,rh)*0.36}" fill="#fff" stroke="${DRUM_INK[k]}" stroke-width="4"/>`;
+        else g+=`<circle cx="${cx}" cy="${cy}" r="${Math.min(sw,rh)*0.36*(ghost?0.6:1)}" fill="${DRUM_INK[k]}"/>`; }); });
+  }else{
+    const flat = card.contour ? card.contour.flat() : null; const maxH = flat ? Math.max(...flat,1) : 1;
+    const top=y0+14, bot=H-36, pts=[];
+    (card.notes||[]).forEach(([a,d],i)=>{
+      const xa=x0+a*sub*sw, wd=Math.max(sw*0.9, d*sub*sw-4);
+      const h = flat ? (flat[i]||0) : 0, cy = flat ? bot-(h/maxH)*(bot-top) : (top+bot)/2;
+      g+=`<rect x="${xa+2}" y="${cy-9}" width="${wd}" height="18" rx="9" fill="#221F20"/>`;
+      g+=`<circle cx="${xa+2+9}" cy="${cy}" r="5" fill="#FDBE10"/>`;
+      pts.push([xa+2+9,cy]);
+    });
+    if(flat && pts.length>1) g+=`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="#221F20" stroke-width="1.5" stroke-dasharray="2 3"/>`;
+  }
+  g+=`<text x="${x0}" y="${H-8}" font-family="Ubuntu,Arial,sans-serif" font-size="10" fill="#6B6461">✎ ${card.tipus==="bateria"?"bateria":card.tipus==="melodic"?"contorn melòdic":"patró rítmic"}</text>`;
+  return g+`</svg>`;
+}
+
+/* ---------- dissenyador ---------- */
+let ds=null;   // estat de l'editor
+const DS_DRUMS = [["crash","Plat"],["hh","Charles"],["oh","Charles obert"],["sn","Caixa"],["ghost","Caixa fluixa"],["kk","Bombo"],["t1","Tom"]];
+function openDesigner(col,row,card){
+  const M=metre(), sub = card ? card.sub : (M.div===3?3:4);
+  ds = { col, row, id: card ? card.id : null, tipus: card ? card.tipus : (row.baralla==="bateria"?"bateria":"ritme"), sub, nom: card ? card.nom : "", steps:[], hits:{} };
+  const N = M.bpb*sub;
+  ds.steps = Array.from({length:N}, ()=>({st:0,h:0}));
+  DS_DRUMS.forEach(([k])=>ds.hits[k]=Array(N).fill(false));
+  if(card){
+    if(card.tipus==="bateria"){ DS_DRUMS.forEach(([k])=>(card[k]||[]).forEach(p=>{ if(p<N) ds.hits[k][p]=true; })); }
+    else { const flat = card.contour ? card.contour.flat() : []; (card.notes||[]).forEach(([a,d],i)=>{ const s=Math.round(a*sub), n=Math.max(1,Math.round(d*sub)); if(s<N){ ds.steps[s]={st:1,h:flat[i]||0}; for(let k=1;k<n && s+k<N;k++) ds.steps[s+k]={st:2,h:flat[i]||0}; } }); }
+  }
+  $("dsTitle").textContent = card ? "Edita la carta" : "Dissenya una carta nova";
+  $("dsSub").textContent = `${row.nom} · ${M.nom} · la carta es repeteix a cada compàs de la part`;
+  $("dsNom").value = ds.nom;
+  $("dsTipusWrap").style.display = row.baralla==="ritme" ? "" : "none";
+  $("dsSubWrap").style.display = M.div===3 ? "none" : "";
+  $("dsDel").style.display = card ? "" : "none";
+  $("dsOk").textContent = card ? "Desa els canvis" : "Desa i posa-la aquí";
+  renderDesigner();
+  $("modalDesign").classList.add("open");
+}
+function dsSetSub(sub){ if(sub===ds.sub) return; const old=ds.sub; ds.sub=sub; const N=metre().bpb*sub, f=sub/old;
+  const steps = Array.from({length:N}, ()=>({st:0,h:0})); ds.steps.forEach((s,i)=>{ const j=Math.round(i*f); if(j<N && s.st){ if(s.st===1 || !steps[j].st) steps[j]={...s}; } }); ds.steps=steps;
+  const hits={}; DS_DRUMS.forEach(([k])=>{ hits[k]=Array(N).fill(false); ds.hits[k].forEach((v,i)=>{ const j=Math.round(i*f); if(v && j<N) hits[k][j]=true; }); }); ds.hits=hits; renderDesigner(); }
+function renderDesigner(){
+  const M=metre(), N=M.bpb*ds.sub, grid=$("dsGrid");
+  document.querySelectorAll("#dsTipus button").forEach(b=>b.classList.toggle("on", b.dataset.v===ds.tipus));
+  document.querySelectorAll("#dsSubSeg button").forEach(b=>b.classList.toggle("on", +b.dataset.v===ds.sub));
+  grid.style.gridTemplateColumns = `auto repeat(${N}, minmax(18px,1fr))`;
+  let h = `<div></div>` + Array.from({length:N},(_,i)=>`<div class="pul">${i%ds.sub===0 ? (i/ds.sub+1) : "·"}</div>`).join("");
+  const cell = (cls, data, style) => `<div class="st ${cls}" ${data} style="${style||''}"></div>`;
+  if(ds.tipus==="bateria"){
+    DS_DRUMS.forEach(([k,nom])=>{ h+=`<div class="lab">${nom}</div>`; for(let i=0;i<N;i++) h+=cell((ds.hits[k][i]?"on":"")+(i%ds.sub===0?" b0":""), `data-k="${k}" data-i="${i}"`, `--dot:${DRUM_INK[k]}`); });
+    $("dsHelp").innerHTML = "Clica una casella per posar-hi o treure-hi un cop. Cada columna és una subdivisió del pols; les columnes marcades amb número són els pulsos.";
+  }else if(ds.tipus==="melodic"){
+    for(let hh=4; hh>=0; hh--){ h+=`<div class="lab">${hh===0?"fonamental":hh===4?"més aguda":"&nbsp;"}</div>`; for(let i=0;i<N;i++){ const s=ds.steps[i]; const cls = s.st && s.h===hh ? (s.st===1?"on":"hold") : ""; h+=cell(cls+(i%ds.sub===0?" b0":""), `data-h="${hh}" data-i="${i}"`, `--dot:#3fb4ff`); } }
+    $("dsHelp").innerHTML = "Clica una casella per posar-hi una nota a aquella alçada (0 = fonamental de l'acord; cap amunt, les altres notes de l'acord). Clica la mateixa nota un altre cop per <b>allargar-la</b> (—) i un tercer cop per treure-la. Cada nota dura fins on s'allarga; la resta és silenci.";
+  }else{
+    h+=`<div class="lab">acord</div>`; for(let i=0;i<N;i++){ const s=ds.steps[i]; h+=cell((s.st===1?"on":s.st===2?"hold":"")+(i%ds.sub===0?" b0":""), `data-h="0" data-i="${i}"`, `--dot:#221F20`); }
+    $("dsHelp").innerHTML = "Clica una casella per posar-hi una nota (●). Torna-hi a clicar per convertir-la en <b>allargament</b> de la nota anterior (—) i un tercer cop per deixar-la en silenci. Les caselles buides són silenci.";
+  }
+  grid.innerHTML = h;
+  grid.querySelectorAll(".st").forEach(el=>el.onclick=()=>{
+    const i=+el.dataset.i;
+    if(ds.tipus==="bateria"){ const k=el.dataset.k; ds.hits[k][i]=!ds.hits[k][i]; if(k==="hh" && ds.hits.hh[i]) ds.hits.oh[i]=false; if(k==="oh" && ds.hits.oh[i]) ds.hits.hh[i]=false; }
+    else { const hh=+el.dataset.h, s=ds.steps[i];
+      if(!s.st || s.h!==hh) ds.steps[i]={st:1,h:hh};
+      else if(s.st===1) ds.steps[i]={st:2,h:hh};
+      else ds.steps[i]={st:0,h:0}; }
+    renderDesigner();
+  });
+  $("dsPreview").innerHTML = svgOwnCard(dsToCard());
+}
+function dsToCard(){
+  const M=metre(), N=M.bpb*ds.sub, id = ds.id || ("u"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36));
+  const card = { id, propia:true, nom: ($("dsNom").value||"").trim() || "Carta pròpia", tipus:ds.tipus, metre:song.metrica, sub:ds.sub };
+  if(ds.tipus==="bateria"){ card.grid=N; DS_DRUMS.forEach(([k])=>{ const l=[]; ds.hits[k].forEach((v,i)=>{ if(v) l.push(i); }); if(l.length) card[k]=l; }); return card; }
+  const notes=[], hs=[];
+  for(let i=0;i<N;i++){ const s=ds.steps[i]; if(s.st===1){ let n=1; while(i+n<N && ds.steps[i+n].st===2) n++; notes.push([i/ds.sub, n/ds.sub]); hs.push(s.h); } }
+  card.notes = notes;
+  if(ds.tipus==="melodic") card.contour = [hs];
+  return card;
+}
+async function dsPlayPreview(){
+  const card = dsToCard(); if(card.tipus!=="bateria" && !card.notes.length) return;
+  audio(); if(AC.state!=="running"){ try{ await AC.resume(); }catch(e){} }
+  const ch = parseProg(song.prog, song.key)[0] || parseChord("I", song.key);
+  const t = AC.currentTime+0.05, bd = barDur();
+  for(let r=0;r<2;r++){ scheduleCard(ds.row, card, ch, t+r*bd); if(ds.row.id!=="bateria"){ const hh = D.BATERIA[0]; } }
+  curRow=null;
+}
+function dsSave(){
+  const card = dsToCard();
+  if(card.tipus==="bateria" ? !DS_DRUMS.some(([k])=>card[k]) : !card.notes.length){ alert("La carta és buida: posa-hi alguna nota o cop."); return; }
+  const list = customCards(); const k = list.findIndex(c=>c.id===card.id); if(k>=0) list[k]=card; else list.push(card);
+  ds.col.cells[ds.row.id] = card.id;
+  closeModals(); changed();
+}
+
+/* ============================================================
+   EXPRESSIVITAT: línia de volum per pista (automatització)
+   ============================================================ */
+const AUTO_DEF = 0.7;                                  // alçada de la línia que equival a volum normal (0 dB)
+const AUTO_TRACKS = [["master","Màster","#221F20"],["bateria","Bateria","#f4a261"],["teclat","Teclat","#79cf5a"],["baix","Baix","#3fb4ff"],["guitarra","Guitarra","#e63946"]];
+let autoTrack = "master";
+const autoGain = v => Math.pow(Math.max(0,v)/AUTO_DEF, 2);
+const autoDb = v => v<=0 ? "−∞" : (20*Math.log10(autoGain(v))).toFixed(1).replace("-","−")+" dB";
+function autoPoints(id){ const out=[]; song.cols.forEach((c,ci)=>((c.auto||{})[id]||[]).forEach(p=>out.push({pos:ci+p.t, v:p.v}))); return out.sort((a,b)=>a.pos-b.pos); }
+function autoAt(id, pos, pts){
+  pts = pts || autoPoints(id); if(!pts.length) return AUTO_DEF;
+  if(pos<=pts[0].pos) return pts[0].v; if(pos>=pts[pts.length-1].pos) return pts[pts.length-1].v;
+  for(let i=1;i<pts.length;i++){ if(pts[i].pos>=pos){ const a=pts[i-1], b=pts[i]; const f = b.pos===a.pos ? 1 : (pos-a.pos)/(b.pos-a.pos); return a.v+(b.v-a.v)*f; } }
+  return AUTO_DEF;
+}
+function hasAuto(){ return song.cols.some(c=>c.auto && Object.values(c.auto).some(l=>l&&l.length)); }
+// programa les rampes de volum d'un compàs (de la posició p0 a p1, en columnes)
+function scheduleAuto(ev, t0){
+  if(!AC) return;
+  const col = song.cols[ev.ci], nb = col.rep*ev.n, p0 = ev.ci + (ev.r*ev.n+ev.i)/nb, p1 = p0 + 1/nb, bd = barDur();
+  AUTO_TRACKS.forEach(([id])=>{
+    const node = id==="master" ? masterAuto : bus(id).auto; if(!node) return;
+    const pts = autoPoints(id), g = node.gain;
+    g.cancelScheduledValues(t0); g.setValueAtTime(autoGain(autoAt(id,p0,pts)), t0);
+    pts.filter(p=>p.pos>p0 && p.pos<p1).forEach(p=>g.linearRampToValueAtTime(autoGain(p.v), t0+(p.pos-p0)/(p1-p0)*bd));
+    g.linearRampToValueAtTime(autoGain(autoAt(id,p1,pts)), t0+bd);
+  });
+}
+function laneHeadEl(){
+  const h = document.createElement("div"); h.className="laneHead";
+  h.innerHTML = `<span>🎚 Expressivitat</span><select title="Pista de la línia de volum">${AUTO_TRACKS.map(([id,n,c])=>`<option value="${id}" ${id===autoTrack?"selected":""}>${n}</option>`).join("")}</select><button title="Treu tots els punts d'aquesta pista">Treu la línia</button>`;
+  h.querySelector("select").onchange = e=>{ autoTrack=e.target.value; renderGrid(); };
+  h.querySelector("button").onclick = ()=>{ song.cols.forEach(c=>{ if(c.auto) delete c.auto[autoTrack]; }); changed(); };
+  return h;
+}
+function laneSVG(col, ci){
+  const id=autoTrack, colr = AUTO_TRACKS.find(t=>t[0]===id)[2];
+  const W = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell-w"))||150, H = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--lane-h"))||74;
+  const pts = autoPoints(id), mine = ((col.auto||{})[id]||[]).slice().sort((a,b)=>a.t-b.t);
+  const Y = v => 6 + (1-v)*(H-12), X = t => t*W;
+  const vl = autoAt(id, ci, pts), vr = autoAt(id, ci+1, pts);
+  const line = [[0,Y(vl)], ...mine.map(p=>[X(p.t),Y(p.v)]), [W,Y(vr)]];
+  const nb = col.rep*colChords(col).length;
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+  for(let b=1;b<nb;b++){ const x=b/nb*W; g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="${b%colChords(col).length===0?'#ddd':'#eee'}"/>`; }
+  g+=`<line x1="0" y1="${Y(AUTO_DEF)}" x2="${W}" y2="${Y(AUTO_DEF)}" stroke="#ccc" stroke-dasharray="3 3"/>`;
+  g+=`<polygon points="0,${H} ${line.map(p=>p.join(",")).join(" ")} ${W},${H}" fill="${colr}" opacity=".15"/>`;
+  g+=`<polyline points="${line.map(p=>p.join(",")).join(" ")}" fill="none" stroke="${colr}" stroke-width="2"/>`;
+  mine.forEach((p,i)=>{ g+=`<circle class="pt" data-i="${i}" cx="${X(p.t)}" cy="${Y(p.v)}" r="6" fill="#fff" stroke="${colr}" stroke-width="2.5"/>`; });
+  if(!pts.length && ci===0) g+=`<text class="val" x="4" y="${H-4}">clica per posar-hi punts</text>`;
+  return g+`</svg>`;
+}
+function laneEl(col, ci){
+  const el = document.createElement("div"); el.className="lane"; el.title="Línia de volum: clica per afegir un punt, arrossega'l, doble clic per treure'l";
+  el.innerHTML = laneSVG(col, ci);
+  let drag=null;
+  const posOf = e=>{ const r=el.getBoundingClientRect(); return { t: Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)), v: Math.min(1,Math.max(0,1-((e.clientY-r.top)-6)/(r.height-12))) }; };
+  const list = ()=>{ col.auto = col.auto||{}; return col.auto[autoTrack] = col.auto[autoTrack]||[]; };
+  el.onpointerdown = e=>{
+    e.preventDefault(); const l=list(); l.sort((a,b)=>a.t-b.t);
+    const pt = e.target.classList.contains("pt") ? l[+e.target.dataset.i] : null;
+    if(e.detail===2 && pt){ l.splice(l.indexOf(pt),1); changed(); return; }
+    const p = pt || (()=>{ const q=posOf(e); l.push(q); return q; })();
+    drag = p; el.setPointerCapture(e.pointerId); el.innerHTML = laneSVG(col,ci); refreshLanes();
+  };
+  el.onpointermove = e=>{ if(!drag) return; const q=posOf(e); drag.t=q.t; drag.v=q.v; refreshLanes(); showLaneVal(el, drag); };
+  el.onpointerup = el.onpointercancel = e=>{ if(!drag) return; drag=null; changed(); };
+  return el;
+}
+function showLaneVal(el, p){ let t=el.querySelector("text.val"); if(!t){ el.querySelector("svg").insertAdjacentHTML("beforeend", `<text class="val" x="4" y="10"></text>`); t=el.querySelector("text.val"); } t.textContent = autoDb(p.v); }
+function refreshLanes(){ document.querySelectorAll("#grid .lane").forEach((el,ci)=>{ if(song.cols[ci]) el.innerHTML = laneSVG(song.cols[ci], ci); }); }
+
 /* ---------- init ---------- */
 function init(){
-  $("key").innerHTML = KEYS.map(([v,n])=>`<option value="${v}">${n} major</option>`).join("") + KEYS.map(([v,n])=>`<option value="${v}|m">${n} menor</option>`).join("");
+  $("key").innerHTML = KEYS.map(([v,n])=>`<option value="${v}">${catName(n)} major (${n})</option>`).join("") + KEYS.map(([v,n])=>`<option value="${v}|m">${catName(n)} menor (${n}m)</option>`).join("");
   $("progSel").innerHTML = D.PROGRESSIONS.map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
 
   document.querySelectorAll("#metrica button").forEach(b=>b.onclick=()=>{ song.metrica=b.dataset.v; adaptToMetre(); changed(); restartIfPlaying(); });
@@ -1302,6 +1610,13 @@ function init(){
 
   document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click", e=>{ if(e.target===m) closeModals(); }));
   document.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModals);
+  document.querySelectorAll("#dsTipus button").forEach(b=>b.onclick=()=>{ ds.tipus=b.dataset.v; renderDesigner(); });
+  document.querySelectorAll("#dsSubSeg button").forEach(b=>b.onclick=()=>dsSetSub(+b.dataset.v));
+  $("dsNom").oninput = ()=>{ $("dsPreview").innerHTML = svgOwnCard(dsToCard()); };
+  $("dsClear").onclick = ()=>{ ds.steps.forEach(s=>{ s.st=0; s.h=0; }); Object.values(ds.hits).forEach(a=>a.fill(false)); renderDesigner(); };
+  $("dsPlay").onclick = dsPlayPreview;
+  $("dsOk").onclick = dsSave;
+  $("dsDel").onclick = ()=>{ if(ds.id && confirm("Eliminar aquesta carta de la teva col·lecció?")){ removeOwnCard(ds.id); closeModals(); changed(); } };
   $("mpSel").onchange = ()=>{ $("mpCustom").style.display = $("mpSel").value==="custom" ? "" : "none"; $("mpChips").innerHTML=chipsHTML(mpCurrent()); };
   $("mpCustom").oninput = ()=>{ $("mpChips").innerHTML=chipsHTML(mpCurrent()); };
   $("mpGlobal").onclick = ()=>{ mpCol.prog=null; closeModals(); changed(); };
@@ -1322,6 +1637,7 @@ function init(){
   if(h){ try{ loadSong(decodeSong(h[1])); loaded=true; }catch(e){ console.warn(e); } }
   if(!loaded){ try{ const s=localStorage.getItem("rockin-creacio"); if(s){ loadSong(JSON.parse(s)); loaded=true; } }catch(e){} }
   if(!loaded || !song.cols.length){ randomSong(); }
+  mergeOwnCollection();
   changed();
 }
 init();
