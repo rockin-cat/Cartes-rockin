@@ -8,7 +8,7 @@
 <link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=25"></script>
+<script src="dades.js?v=26"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
@@ -1323,7 +1323,7 @@ function openCardModal(col,row){
     o.innerHTML = `<div class="im">${cardImgHTML(card,row)}</div><div class="optFoot"><span>${lbl}</span>${row.nomesVisual?"":'<button class="play" title="Escolta aquesta carta">▶</button>'}</div>`;
     o.onclick=()=>{ col.cells[row.id]=card.id; closeModals(); changed(); };
     const pb = o.querySelector(".play"); if(pb) pb.onclick = ev=>{ ev.stopPropagation(); previewCard(row, card, col); };
-    if(card.propia){ const e=document.createElement("button"); e.className="edit"; e.textContent="✎"; e.title="Edita aquesta carta"; e.onclick=ev=>{ ev.stopPropagation(); openDesigner(col,row,card); }; o.appendChild(e); }
+    if(!row.nomesVisual && !isStrum(card)){ const e=document.createElement("button"); e.className="edit"; e.textContent="✎"; e.title=card.propia?"Edita aquesta carta":"Fes-ne una còpia i edita-la"; e.onclick=ev=>{ ev.stopPropagation(); openDesigner(col,row,card.propia?card:toEditable(card,row)); }; o.appendChild(e); }
     gal.appendChild(o);
   });
   const none = document.createElement("div"); none.className="opt special"+(!cur?" sel":""); none.textContent="🔇 Silenci (no toca)"; none.onclick=()=>{ delete col.cells[row.id]; closeModals(); changed(); }; gal.appendChild(none);
@@ -1393,12 +1393,21 @@ function removeOwnCard(id){
   song.cols.forEach(c=>Object.keys(c.cells).forEach(k=>{ if(c.cells[k]===id) delete c.cells[k]; }));
   try{ const col = JSON.parse(localStorage.getItem(OWN_KEY)||"[]").filter(c=>c.id!==id); localStorage.setItem(OWN_KEY, JSON.stringify(col)); }catch(e){}
 }
+// una carta de bateria de 4 pulsos en 3/4, 6/8 o 9/8: la redibuixem amb només els pulsos que sonen, perquè es vegi el que sona
+function drumCardForMetre(card){
+  const M=metre(); if(M.bpb===4 || card.propia || !card.grid) return null;
+  const sub = card.grid/4, maxPos = sub*M.bpb, out = { id:card.id, propia:true, tipus:"bateria", metre:song.metrica, sub, grid:maxPos, nom:"Carta "+card.num };
+  ["crash","hh","oh","ride","sn","ghost","kk","ghostkk","t1","t2","t3"].forEach(k=>{ const l=(card[k]||[]).filter(p=>p<maxPos); if(l.length) out[k]=l; });
+  return out;
+}
 function cardImgHTML(card, row){
+  if(row && row.id==="bateria"){ const d = drumCardForMetre(card); if(d) return `<div class="ccard">${svgOwnCard(d)}</div>`; }
   if(card.img) return `<img src="${card.img}" loading="lazy" alt="${card.id}">`;
   return `<div class="ccard">${svgOwnCard(card)}</div>`;
 }
 // dibuix "estil carta" d'una carta pròpia
-const DRUM_INK = { crash:"#f4a261", hh:"#ffd23f", oh:"#ffd23f", ride:"#ffd23f", sn:"#e63946", ghost:"#79cf5a", kk:"#3fb4ff", ghostkk:"#3fb4ff", t1:"#b08968", t2:"#b08968", t3:"#b08968" };
+// colors com a les cartes Rockin: charles groc, caixa verda, bombo blau, plat vermell, toms marró
+const DRUM_INK = { crash:"#c8505a", hh:"#ffd23f", oh:"#ffd23f", ride:"#f4a261", sn:"#79cf5a", ghost:"#79cf5a", kk:"#3fb4ff", ghostkk:"#3fb4ff", t1:"#b08968", t2:"#b08968", t3:"#b08968" };
 function svgOwnCard(card){
   const M = METRES[card.metre] || METRES.binari, bpb = M.bpb, sub = card.sub || (M.div===3?3:4), N = bpb*sub;
   const W=300, H=200, x0=24, x1=W-24, y0=54, pw=(x1-x0)/bpb;
@@ -1409,7 +1418,7 @@ function svgOwnCard(card){
   for(let b=0;b<=bpb;b++){ const x=x0+b*pw; g+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${H-22}" stroke="#221F20" stroke-width="${b===0||b===bpb?2:1}" stroke-dasharray="${b===0||b===bpb?'':'3 3'}"/>`; }
   const sw=(x1-x0)/N;
   if(card.tipus==="bateria"){
-    const rows=["crash","hh","oh","sn","ghost","kk","t1"].filter(k=>(card[k]||[]).length);
+    const rows=["crash","hh","oh","ride","sn","ghost","kk","ghostkk","t1","t2","t3"].filter(k=>(card[k]||[]).length);
     const rh=(H-22-y0)/Math.max(rows.length,3);
     rows.forEach((k,i)=>{ const cy=y0+rh*(i+0.5);
       (card[k]||[]).forEach(p=>{ const cx=x0+(p+0.5)*sw; const ghost=k==="ghost"||k==="ghostkk";
@@ -1432,11 +1441,20 @@ function svgOwnCard(card){
 }
 
 /* ---------- dissenyador ---------- */
+// còpia editable d'una carta predeterminada (bateria, patró rítmic o contorn melòdic)
+function toEditable(card,row){
+  const M=metre();
+  if(row.id==="bateria"){ const d = drumCardForMetre(card) || Object.assign({tipus:"bateria", sub:card.grid/4, grid:card.grid}, card); const c = Object.assign({}, d, { id:null, propia:true, metre:song.metrica, nom:"Carta "+card.num+" (còpia)" }); delete c.img; delete c.num; delete c.title; return c; }
+  const bpb=M.bpb;
+  if(isMelodic(card)){ const evs = contourEvents(card,bpb); const sub = M.div===3?3:(evs.some(e=>Math.abs(e.t*4-Math.round(e.t*4))<0.01 && Math.abs(e.t*2-Math.round(e.t*2))>0.01)?4:2); return { id:null, propia:true, tipus:"melodic", metre:song.metrica, sub, nom:"Contorn (còpia)", notes:evs.map(e=>[e.t,e.d]), contour:[evs.map(e=>e.h)] }; }
+  const notes = card.notes.filter(n=>n[0]<bpb-1e-6); const fine = notes.some(n=>[n[0],n[1]].some(x=>Math.abs(x*2-Math.round(x*2))>0.01));
+  return { id:null, propia:true, tipus:"ritme", metre:song.metrica, sub: M.div===3?3:(fine?4:2), nom:"Patró (còpia)", notes };
+}
 let ds=null;   // estat de l'editor
 const DS_DRUMS = [["crash","Plat"],["hh","Charles"],["oh","Charles obert"],["sn","Caixa"],["ghost","Caixa fluixa"],["kk","Bombo"],["t1","Tom"]];
 function openDesigner(col,row,card){
   const M=metre(), sub = card ? card.sub : (M.div===3?3:4);
-  ds = { col, row, id: card ? card.id : null, tipus: card ? card.tipus : (row.baralla==="bateria"?"bateria":"ritme"), sub, nom: card ? card.nom : "", steps:[], hits:{} };
+  ds = { col, row, id: card ? card.id : null, tipus: card ? card.tipus : (row.baralla==="bateria"?"bateria":"ritme"), sub: sub||(M.div===3?3:4), nom: card ? card.nom : "", steps:[], hits:{} };
   const N = M.bpb*sub;
   ds.steps = Array.from({length:N}, ()=>({st:0,h:0}));
   DS_DRUMS.forEach(([k])=>ds.hits[k]=Array(N).fill(false));
@@ -1444,13 +1462,13 @@ function openDesigner(col,row,card){
     if(card.tipus==="bateria"){ DS_DRUMS.forEach(([k])=>(card[k]||[]).forEach(p=>{ if(p<N) ds.hits[k][p]=true; })); }
     else { const flat = card.contour ? card.contour.flat() : []; (card.notes||[]).forEach(([a,d],i)=>{ const s=Math.round(a*sub), n=Math.max(1,Math.round(d*sub)); if(s<N){ ds.steps[s]={st:1,h:flat[i]||0}; for(let k=1;k<n && s+k<N;k++) ds.steps[s+k]={st:2,h:flat[i]||0}; } }); }
   }
-  $("dsTitle").textContent = card ? "Edita la carta" : "Dissenya una carta nova";
+  $("dsTitle").textContent = card && card.id ? "Edita la carta" : card ? "Edita una còpia de la carta" : "Dissenya una carta nova";
   $("dsSub").textContent = `${row.nom} · ${M.nom} · la carta es repeteix a cada compàs de la part`;
   $("dsNom").value = ds.nom;
   $("dsTipusWrap").style.display = row.baralla==="ritme" ? "" : "none";
   $("dsSubWrap").style.display = M.div===3 ? "none" : "";
-  $("dsDel").style.display = card ? "" : "none";
-  $("dsOk").textContent = card ? "Desa els canvis" : "Desa i posa-la aquí";
+  $("dsDel").style.display = card && card.id ? "" : "none";
+  $("dsOk").textContent = card && card.id ? "Desa els canvis" : "Desa i posa-la aquí";
   renderDesigner();
   $("modalDesign").classList.add("open");
 }
