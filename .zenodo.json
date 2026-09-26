@@ -1,0 +1,22 @@
+{
+  "title": "Taller de creació Rockin / Rockin Creative Workshop",
+  "description": "<p><b>CA:</b> Versió web interactiva de les cartes Rockin, un material didàctic per aprendre música moderna en grup a l'aula (patrons rítmics i melòdics, acords, creació). Inclou sons i imatges de les cartes.</p><p><b>EN:</b> Interactive web version of the Rockin cards, a teaching resource for learning popular music as a group in the classroom (rhythmic and melodic patterns, chords, composition). Includes card images and audio.</p>",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "González Fernández, Laia",
+      "affiliation": "Rockin.cat SCCL",
+      "orcid": "0009-0009-9640-3210"
+    }
+  ],
+  "license": "cc-by-nc-sa-4.0",
+  "access_right": "open",
+  "keywords": [
+    "music education",
+    "educació musical",
+    "card game",
+    "classroom music",
+    "Rockin"
+  ],
+  "language": "cat"
+}
