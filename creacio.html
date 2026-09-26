@@ -8,7 +8,7 @@
 <link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=26"></script>
+<script src="dades.js?v=28"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
@@ -103,8 +103,10 @@
   .cell.empty{ background:repeating-linear-gradient(45deg,#f6f7f9 0 8px,#eef0f3 8px 16px); }
   .cell.empty::after{ content:"＋"; font-size:26px; color:#b7bcc4; }
   /* les cartes rítmiques i melòdiques tenen el dibuix al mig: les ampliem perquè es vegi bé */
-  .cell.ritme img{ transform:scale(2.3); }
-  .cell.melodic img{ transform:scale(1.7); }
+  /* el dibuix ocupa la franja central de la imatge (x 7–93 %, y 40–63 %): l'ampliem a l'amplada de la casella i mostrem el centre */
+  .cell.ritme img, .cell.melodic img, .cell.rascat img{ max-width:none; max-height:none; width:104%; height:auto; transform:none; }
+  .cell.melodic img{ width:100%; transform:translateY(-4%); }     /* els contorns ocupen més alçada (30–78 %) */
+  .cell.rascat img{ width:95%; transform:translateY(-13%); }      /* alguns rascats tenen dues files de fletxes (40–92 %) */
   .cell.veu img{ transform:scale(1); }
   .rowHead img{ cursor:pointer; }
   .rowHead img:hover{ transform:scale(1.06); }
@@ -124,6 +126,8 @@
   .ccard{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
   .ccard svg{ width:100%; height:100%; display:block; }
   .opt .im .ccard svg{ max-height:120px; }
+  .cell.propia-ritme .ccard svg{ width:118%; max-width:none; }
+  .opt.propia-ritme .im .ccard svg{ width:116%; max-width:none; }
   .opt .edit{ position:absolute; top:4px; right:4px; width:22px; height:22px; padding:0; font-size:11px; border-radius:999px; background:#fff; border:1px solid var(--border); }
   .opt{ position:relative; }
   .opt.design{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:140px; font-size:14px; font-weight:700; border-style:dashed; background:#fff; }
@@ -203,8 +207,9 @@
   .opt.sel{ border-color:var(--rk-menta-fosc); background:#e6f1ea; }
   .opt .im{ height:120px; overflow:hidden; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; }
   .opt img{ max-width:100%; max-height:100%; object-fit:contain; }
-  .opt.ritme img{ transform:scale(2.4); } .opt.melodic img{ transform:scale(1.7); } .opt.rascat img{ transform:scale(1.9); }
-  .cell.rascat img{ transform:scale(1.8); }
+  .opt.ritme img, .opt.melodic img, .opt.rascat img{ max-width:none; max-height:none; width:106%; height:auto; transform:none; }
+  .opt.melodic img{ width:100%; transform:translateY(-4%); }
+  .opt.rascat img{ width:95%; transform:translateY(-13%); }
   .opt svg.tl{ display:block; width:100%; height:26px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
   .opt svg.dg{ display:block; width:100%; height:34px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
   .optFoot{ display:flex; align-items:center; justify-content:space-between; gap:4px; margin-top:4px; min-height:22px; }
@@ -672,14 +677,25 @@ async function prefetchSamples(){
   SAMPLES.status = Object.keys(SAMPLES.raw).length ? "fetched" : "failed";
   updateLoadUI(); if(AC) decodeSamples();
 }
-let decoding=false;
-async function decodeSamples(){
-  if(!AC || decoding) return; decoding=true;
-  for(const [k,raw] of Object.entries(SAMPLES.raw)){
-    if(SAMPLES.buf[k] && SAMPLES.buf[k].ctx===AC) continue;
-    try{ const b = await AC.decodeAudioData(raw.slice(0)); SAMPLES.buf[k] = { ctx:AC, b }; SAMPLES.decoded++; }catch(e){}
+let decoding=null;
+function decodeSamples(){
+  if(!AC) return Promise.resolve(); if(decoding) return decoding;
+  const ac = AC;
+  decoding = Promise.all(Object.entries(SAMPLES.raw).map(async ([k,raw])=>{
+    if(SAMPLES.buf[k] && SAMPLES.buf[k].ctx===ac) return;
+    try{ const b = await ac.decodeAudioData(raw.slice(0)); SAMPLES.buf[k] = { ctx:ac, b }; SAMPLES.decoded++; }catch(e){}
+  })).then(()=>{ decoding=null; updateLoadUI(); });
+  return decoding;
+}
+// abans de tocar, esperem (com a molt 'ms') que els sons gravats estiguin descodificats, perquè el primer compàs ja soni amb instruments reals
+async function samplesReady(ms){
+  if(!useSamples()) return;
+  const t0 = performance.now();
+  while(performance.now()-t0 < ms){
+    if(SAMPLES.status==="failed") return;
+    if(SAMPLES.status==="fetched"){ const p = decodeSamples(); await Promise.race([p, new Promise(r=>setTimeout(r, ms-(performance.now()-t0)))]); return; }
+    await new Promise(r=>setTimeout(r, 50));
   }
-  decoding=false; updateLoadUI();
 }
 function sample(k){ const e = SAMPLES.buf[k]; return (e && e.ctx===AC) ? e.b : null; }
 function useSamples(){ return song.mix.sons.mode !== "sintesi"; }
@@ -1001,6 +1017,7 @@ async function play(startCol){
     try{ const o=AC.createOscillator(), g=AC.createGain(); g.gain.value=0; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.01); await AC.resume(); }catch(e){}
   }
   if(AC.state!=="running"){ alert("El navegador ha bloquejat el so (estat: "+AC.state+"). Prova de tornar a prémer ▶, comprova que la pestanya no estigui silenciada i que el volum de l'ordinador estigui activat."); }
+  await samplesReady(2500);
   const sonen = ROWS.filter(r=>!r.nomesVisual && !rowSilent(r.id));
   if(!sonen.length){ alert("Totes les pistes estan silenciades (botons M/S a l'esquerra de cada fila)."); }
   playing=true; nextIdx=0; nextTime=AC.currentTime+0.1; uiQueue=[]; GTR.voices=[];
@@ -1115,7 +1132,7 @@ function renderGrid(){
     ROWS.forEach(row=>{
       const id = col.cells[row.id];
       const card = id ? findCard(row,id) : null;
-      const cell = document.createElement("div"); cell.className="cell"+(id?"":" empty")+(row.id==="veu"?" veu":(card&&card.propia)?" propia":isMelodic(card)?" melodic":isStrum(card)?" rascat":row.baralla==="ritme"?" ritme":"");
+      const cell = document.createElement("div"); cell.className="cell"+(id?"":" empty")+(row.id==="veu"?" veu":(card&&card.propia)?" propia"+(card.tipus==="ritme"?" propia-ritme":""):isMelodic(card)?" melodic":isStrum(card)?" rascat":row.baralla==="ritme"?" ritme":"");
       if(id){
         if(card){
           cell.innerHTML = cardImgHTML(card,row) + (row.id==="bateria" && !card.propia ? `<span class="lbl">${card.num}${card.title?' · '+card.title:''}</span>` : "");
@@ -1318,7 +1335,7 @@ function openCardModal(col,row){
   const cur = col.cells[row.id];
   const addGroup = (title)=>{ const h=document.createElement("h4"); h.textContent=title; gal.appendChild(h); };
   const addCards = (cards, kind)=> cards.forEach(card=>{
-    const o = document.createElement("div"); o.className="opt"+(card.id===cur?" sel":"")+(kind?" "+kind:""); o._card=card;
+    const o = document.createElement("div"); o.className="opt"+(card.id===cur?" sel":"")+(kind?" "+kind:"")+(card.propia&&card.tipus==="ritme"?" propia-ritme":""); o._card=card;
     const lbl = card.propia ? `✎ ${card.nom||"Carta pròpia"}` : row.id==="bateria" ? `<b>${card.num}</b>${card.title?' · '+card.title:''}` : "";
     o.innerHTML = `<div class="im">${cardImgHTML(card,row)}</div><div class="optFoot"><span>${lbl}</span>${row.nomesVisual?"":'<button class="play" title="Escolta aquesta carta">▶</button>'}</div>`;
     o.onclick=()=>{ col.cells[row.id]=card.id; closeModals(); changed(); };
@@ -1408,7 +1425,35 @@ function cardImgHTML(card, row){
 // dibuix "estil carta" d'una carta pròpia
 // colors com a les cartes Rockin: charles groc, caixa verda, bombo blau, plat vermell, toms marró
 const DRUM_INK = { crash:"#c8505a", hh:"#ffd23f", oh:"#ffd23f", ride:"#f4a261", sn:"#79cf5a", ghost:"#79cf5a", kk:"#3fb4ff", ghostkk:"#3fb4ff", t1:"#b08968", t2:"#b08968", t3:"#b08968" };
+// Patró rítmic propi amb el mateix llenguatge que les cartes Rockin: un cercle per pols, dividit en
+// tantes llesques com subdivisions; les llesques on sona una nota són blaves (unides si és la mateixa nota),
+// els silencis queden en blanc i una nota més llarga que un pols és una pastilla turquesa.
+function svgOwnRitme(card){
+  const M = METRES[card.metre] || METRES.binari, bpb = M.bpb, sub = card.sub || (M.div===3?3:4);
+  const W=300, H=100, d=Math.min(64, (W-24)/bpb*0.78), cy=H/2-4, pitch=(W-24)/bpb, x0=12+pitch/2, gap=Math.max(2.5, d*0.055);
+  const BLUE="#3fb4ff", TEAL="#00bfb3";
+  let g=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><rect width="${W}" height="${H}" rx="8" fill="#f1efe9"/><defs>`;
+  for(let b=0;b<bpb;b++) g+=`<clipPath id="c${b}_${card.id}"><circle cx="${x0+b*pitch}" cy="${cy}" r="${d/2}"/></clipPath>`;
+  g+=`</defs>`;
+  for(let b=0;b<bpb;b++) g+=`<circle cx="${x0+b*pitch}" cy="${cy}" r="${d/2}" fill="#fff"/>`;   // pols en silenci = cercle blanc, com a les cartes
+  const sliceX = (b, k) => x0 + b*pitch - d/2 + k*(d/sub);            // x de la llesca k del pols b
+  (card.notes||[]).forEach(([a,dur])=>{
+    const end = Math.min(a+dur, bpb), b0 = Math.floor(a+1e-6), b1 = Math.ceil(end-1e-6)-1;
+    if(dur > 1+1e-6 || b1 > b0){
+      // nota llarga: pastilla turquesa del principi al final (com la blanca de les cartes)
+      const xa = sliceX(b0, Math.round((a-b0)*sub)), xb = sliceX(b1, Math.round((end-b1)*sub));
+      g+=`<rect x="${xa+gap/2}" y="${cy-d/2}" width="${xb-xa-gap}" height="${d}" rx="${d*0.18}" fill="${TEAL}"/>`;
+      return;
+    }
+    const k0 = Math.round((a-b0)*sub), k1 = Math.round((end-b0)*sub);
+    const xa = sliceX(b0,k0)+(k0>0?gap/2:0), xb = sliceX(b0,k1)-(k1<sub?gap/2:0);
+    g+=`<rect x="${xa}" y="${cy-d/2-1}" width="${Math.max(1,xb-xa)}" height="${d+2}" fill="${BLUE}" clip-path="url(#c${b0}_${card.id})"/>`;
+  });
+  g+=`<text x="${W/2}" y="${H-5}" text-anchor="middle" font-family="Ubuntu,Arial,sans-serif" font-size="9" fill="#9a948e">✎ ${(card.nom||"carta pròpia")} · ${M.nom}</text>`;
+  return g+`</svg>`;
+}
 function svgOwnCard(card){
+  if(card.tipus==="ritme") return svgOwnRitme(card);
   const M = METRES[card.metre] || METRES.binari, bpb = M.bpb, sub = card.sub || (M.div===3?3:4), N = bpb*sub;
   const W=300, H=200, x0=24, x1=W-24, y0=54, pw=(x1-x0)/bpb;
   let g=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="${W-3}" height="${H-3}" rx="14" fill="#fff" stroke="#221F20" stroke-width="3"/>`;
@@ -1523,6 +1568,7 @@ async function dsPlayPreview(){
 let previewTimer=null;
 async function previewCard(row, card, col){
   audio(); if(AC.state!=="running"){ try{ await AC.resume(); }catch(e){} }
+  await samplesReady(2500);
   if(playing) stop();
   killAudio(); if(previewTimer){ clearTimeout(previewTimer); previewTimer=null; }
   const ch = (col && colChords(col)[0]) || parseChord("I", song.key);
@@ -1632,6 +1678,7 @@ function init(){
   $("btnRandom").onclick = randomSong;
   $("sonsMode").onchange = e=>{ song.mix.sons.mode=e.target.value; saveLocal(); };
   prefetchSamples();
+  try{ audio(); }catch(e){}   // context creat ja (en pausa fins al primer clic): així els sons es descodifiquen abans de prémer ▶
   $("mixReset").onclick = ()=>{ song.mix=defaultMix(); Object.keys(muted).forEach(k=>muted[k]=false); Object.keys(solo).forEach(k=>solo[k]=false); renderGrid(); renderMixer(); applyAllMix(); saveLocal(); };
   requestAnimationFrame(meterLoop);
   $("btnRandomFill").onclick = ()=>{ if(!song.cols.length) addColumn(); song.cols.forEach(c=>randomizeColumn(c,false)); changed(); };
