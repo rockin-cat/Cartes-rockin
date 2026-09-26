@@ -77,9 +77,9 @@ window.ROCKIN_DADES = (function () {
     R("mb29", "Binari", "E.S E.S E.S E.S"), R("mb30", "Binari", "SE. SE. SE. SE."),
   ];
 
-  // ------------------------------ TERNARI (12/8) ----------------------------
-  // Cada carta descriu UN pols dividit en 3 micropolsos (una unitat = un micropols).
-  // L'app la repeteix als 4 polsos del compàs.
+  // ------------------------------ TERNARI (3/4) -----------------------------
+  // Compàs de 3 negres amb subdivisió binària (corxeres i semicorxeres); les cartes
+  // amb cercles partits en tres fan tresets o compàs compost dins del 3/4.
   const TERNARI = [
     R("mt1", "Ternari", "Q Q Q"), R("mt2", "Ternari", "Q Q R"), R("mt3", "Ternari", "Q R Q"),
     R("mt4", "Ternari", "R Q Q"), R("mt5", "Ternari", "Q R R"), R("mt6", "Ternari", "R R Q"),
@@ -90,20 +90,14 @@ window.ROCKIN_DADES = (function () {
     R("mt19", "Ternari", "EE Q EE"), R("mt20", "Ternari", "EE Q Q"), R("mt21", "Ternari", "Q Q EE"),
     R("mt22", "Ternari", "xE xE xE"), R("mt23", "Ternari", "Q xE Q"), R("mt24", "Ternari", "xE Q R"),
     R("mt25", "Ternari", "xE Q xE"),
-    // Cartes amb cercles partits en tres: cada cercle és un pols dividit en 3 micropolsos
-    // (tots els cercles de la carta són iguals, així que la carta defineix com es divideix cada pols).
-    R("mt26", "Ternari", "Q Q Q"),   // 4 cercles · 3 parts iguals
-    R("mt27", "Ternari", "H2 Q"),    // 4 cercles · llarg + curt
-    R("mt28", "Ternari", "Q H2"),    // 4 cercles · curt + llarg
-    R("mt29", "Ternari", "H3"),      // 3 cercles sencers · un cop per pols
-    R("mt30", "Ternari", "Q Q Q"),   // 3 cercles · 3 parts iguals
-    R("mt31", "Ternari", "H2 Q"),    // 3 cercles · llarg + curt
-    R("mt32", "Ternari", "Q H2"),    // 3 cercles · curt + llarg
-    R("mt33", "Ternari", "H3"),      // 2 cercles sencers
-    R("mt34", "Ternari", "Q Q Q"),   // 2 cercles · 3 parts iguals
-    R("mt35", "Ternari", "Q H2"),    // 2 cercles · curt + llarg
-    R("mt36", "Ternari", "H2 Q"),    // 2 cercles · llarg + curt
+    R("mt26", "Ternari", "SES SES SES"), R("mt27", "Ternari", "E.S E.S E.S"), R("mt28", "Ternari", "SE. SE. SE."),
+    R("mt29", "Ternari", "Q Q Q"), R("mt30", "Ternari", "TTT TTT TTT"),
+    R("mt31", "Ternari", "T21 T21 T21"), R("mt32", "Ternari", "T12 T12 T12"),
+    // compàs compost (6/8 dins del 3/4): dues negres amb punt
+    R("mt33", "Ternari", "D D"), R("mt34", "Ternari", "ee3 ee3"),
+    R("mt35", "Ternari", "eq eq"), R("mt36", "Ternari", "qe qe"),
   ];
+
 
   // ------------------------------ BATERIA -----------------------------------
   // Posicions en semicorxeres (0–15) si grid=16, o en tresets (0–11) si grid=12.
@@ -251,8 +245,12 @@ window.ROCKIN_DADES = (function () {
     { nom: "I – IV – vi – V", prog: "I IV vi V" },
     { nom: "I – bVII – IV – I (rock)", prog: "I bVII IV I" },
     { nom: "ii – V – I – I", prog: "ii V I I" },
-    { nom: "i – VI – III – VII (menor)", prog: "i VI III VII" },
-    { nom: "i – iv – v – i (menor)", prog: "i iv v i" },
+    { nom: "i – VI – III – VII", prog: "i VI III VII", minor: true },
+    { nom: "i – iv – v – i", prog: "i iv v i", minor: true },
+    { nom: "i – VII – VI – V (cadència andalusa)", prog: "i VII VI V", minor: true },
+    { nom: "i – iv – VII – III", prog: "i iv VII III", minor: true },
+    { nom: "i – VI – VII – i", prog: "i VI VII i", minor: true },
+    { nom: "i – iv – V – i (V major)", prog: "i iv V i", minor: true },
     { nom: "I – IV (dos acords)", prog: "I IV" },
     { nom: "Blues de 12 compassos", prog: "I I I I IV IV I I V IV I V" },
   ];

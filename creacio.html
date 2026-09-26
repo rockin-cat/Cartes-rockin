@@ -8,7 +8,7 @@
 <link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=19"></script>
+<script src="dades.js?v=20"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
@@ -77,12 +77,14 @@
   .colHead .sub select{ font-size:12px; padding:3px 4px; border-radius:8px; background:rgba(255,255,255,.7); border:none; }
   .colHead .acords{ flex:1; font-size:11px; background:rgba(255,255,255,.7); border:none; border-radius:8px; padding:3px 6px; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
   .colHead .acords.own{ background:#fdf0cc; }
+  .colHead .acords i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:2px; vertical-align:middle; }
+  .colHead .bar{ opacity:.55; } .colHead .bar.on{ opacity:1; }
   .colHead .tools{ position:absolute; top:-8px; right:-6px; display:flex; gap:2px; opacity:0; transition:opacity .15s; }
   .colHead:hover .tools{ opacity:1; }
   .colHead .tools button{ width:22px; height:22px; padding:0; font-size:11px; border-radius:999px; background:#fff; border:1px solid var(--border); }
   .colHead .bars{ display:flex; gap:3px; margin-top:auto; }
-  .colHead .bar{ flex:1; height:5px; border-radius:3px; background:rgba(0,0,0,.15); }
-  .colHead .bar.on{ background:#222; }
+  .colHead .bar{ flex:1; height:6px; border-radius:3px; background:rgba(0,0,0,.15); }
+  .colHead .bar.on{ outline:2px solid #222; outline-offset:1px; }
   .cell{ width:var(--cell-w); height:var(--cell-h); border-radius:4px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; overflow:hidden; border:2px solid transparent; }
   .cell:hover{ border-color:var(--rk-groc); }
   .cell img{ max-width:100%; max-height:100%; object-fit:contain; display:block; pointer-events:none; }
@@ -176,7 +178,7 @@
     <label class="f">Mètrica
       <span class="seg" id="metrica">
         <button data-v="binari" class="on">Binari (4/4)</button>
-        <button data-v="ternari">Ternari (12/8)</button>
+        <button data-v="ternari">Ternari (3/4)</button>
       </span>
     </label>
     <label class="f">Tempo <span id="bpmLbl" style="color:#222">80 bpm</span>
@@ -188,7 +190,7 @@
     <label class="f">Progressió d'acords (roda)
       <select id="progSel"></select>
     </label>
-    <label class="f" id="progCustomWrap" style="display:none">Escriu-la tu (I, ii, iii, IV, V, vi, vii°, bVII… o C, Am, F, G)
+    <label class="f" id="progCustomWrap" style="display:none">Escriu-la tu (major: I, ii, iii, IV, V, vi, vii°, bVII… · menor: i, ii°, III, iv, v, VI, VII · o noms: C, Am, F, G)
       <input type="text" id="progCustom" placeholder="I V vi IV" style="width:260px">
     </label>
   </div>
@@ -286,7 +288,7 @@ function rowSilent(id){ const anySolo = Object.values(solo).some(Boolean); retur
 
 function defaultMix(){ return { master:{vol:80}, bateria:{vol:80,pan:0}, teclat:{vol:80,pan:-0.3}, baix:{vol:80,pan:0}, guitarra:{vol:80,pan:0.3}, sons:{ mode:"mostres", guitarra:"acustica", teclat:"rhodes" } }; }
 function defaultSong(){
-  return { metrica:"binari", bpm:80, key:"C", prog:"I V vi IV", cols:[], mix:defaultMix() };
+  return { metrica:"binari", bpm:80, key:"C", minor:false, prog:"I V vi IV", cols:[], mix:defaultMix() };
 }
 function newCol(sec){ return { sec: sec || "Estrofa", rep:2, prog:null, cells:{} }; }
 
@@ -295,6 +297,18 @@ function newCol(sec){ return { sec: sec || "Estrofa", rep:2, prog:null, cells:{}
    ============================================================ */
 const ROMAN = { I:0, II:1, III:2, IV:3, V:4, VI:5, VII:6 };
 const MAJOR = [0,2,4,5,7,9,11];
+const MINOR = [0,2,3,5,7,8,10];        // menor natural
+const isMinorKey = () => !!song.minor;
+// Colors de Hooktheory per grau de l'escala major (I vermell … vii° rosa); la menor usa els de la relativa major
+const HT_COLORS = ["#e74c3c","#f39c12","#f1c40f","#2ecc71","#3498db","#9b59b6","#ff85c0"];
+const HT_OUT = "#f7c6d9";               // acord fora de l'escala (bVII, etc.)
+function chordColor(ch){
+  if(!ch) return HT_OUT;
+  const tonic = keyRoot(song.key), relMajor = isMinorKey() ? (tonic+3)%12 : tonic;
+  const rel = (ch.root - relMajor + 12) % 12, deg = MAJOR.indexOf(rel);
+  return deg<0 ? HT_OUT : HT_COLORS[deg];
+}
+function chipStyle(ch){ const c=chordColor(ch); return `background:${c};color:${c==="#f1c40f"||c==="#f7c6d9"||c==="#2ecc71"?"#222":"#fff"}`; }
 const NOTE_IDX = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
 
 function keyRoot(key){ const m = key.match(/^([A-G])([#b]?)/); return (NOTE_IDX[m[1]] + (m[2]==="#"?1:m[2]==="b"?-1:0)+12)%12; }
@@ -311,7 +325,8 @@ function parseChord(tok, key){
     accChar = m[1];
     const acc = accChar==="b"?-1:accChar==="#"?1:0;
     const num = m[2]; minor = num===num.toLowerCase();
-    root = (keyRoot(key) + MAJOR[ROMAN[num.toUpperCase()]] + acc + 12) % 12;
+    const scale = isMinorKey() ? MINOR : MAJOR;         // en menor, els graus es compten sobre l'escala menor
+    root = (keyRoot(key) + scale[ROMAN[num.toUpperCase()]] + acc + 12) % 12;
     suffix = m[3];
   }else{
     // 2) nom absolut: C, Am, F#m7, Bbmaj7…
@@ -685,7 +700,7 @@ let playing=false, timer=null, timeline=[], nextIdx=0, nextTime=0, uiQueue=[], r
 // Tant en binari com en ternari el compàs té 4 polsos. En ternari cada pols es divideix en 3 (12/8),
 // així les cartes de bateria en tresets (shuffle) sonen senceres i cada carta de patró ternari
 // (3 micropolsos) omple un pols i es repeteix als 4 polsos del compàs.
-const beatsPerBar = () => 4;
+const beatsPerBar = () => song.metrica==="ternari" ? 3 : 4;
 const barDur = () => beatsPerBar()*60/song.bpm;
 
 function buildTimeline(){
@@ -697,7 +712,7 @@ function buildTimeline(){
 }
 function deckFor(row){
   if(row.baralla==="ritme") return song.metrica==="ternari" ? D.TERNARI : D.BINARI;
-  if(row.baralla==="bateria") return D.BATERIA.filter(c => song.metrica==="ternari" ? c.grid===12 : c.grid!==12);
+  if(row.baralla==="bateria") return D.BATERIA;   // en 3/4 les cartes de bateria (de 4 temps) sonen només els 3 primers temps
   return D.VEU;
 }
 function findCard(row, id){
@@ -710,7 +725,7 @@ const isStrum = card => !!(card && card.strum);
 // Una carta encaixa amb la mètrica? (binari: cartes mb + rascats; ternari: cartes mt). Els contorns melòdics no tenen mètrica.
 function fitsMetre(card){
   if(!card || isMelodic(card) || card.id==="veu") return true;
-  if(card.grid) return song.metrica==="ternari" ? card.grid===12 : card.grid!==12;   // bateria
+  if(card.grid) return true;   // bateria: val per a les dues mètriques
   if(song.metrica==="ternari") return !isStrum(card) && D.TERNARI.includes(card);
   return isStrum(card) || D.BINARI.includes(card);
 }
@@ -743,7 +758,7 @@ function playStrum(card, t0, beat, ch, rGuit){
 function contourEvents(card, bpb){
   const notes = []; card.contour.forEach(fr=>fr.forEach(h=>notes.push(h)));
   const n = notes.length; if(!n) return [];
-  const div = n<=bpb ? 1 : (song.metrica==="ternari" ? 3 : 2);   // subdivisions per pols
+  const div = n<=bpb ? 1 : 2;   // subdivisions per pols (corxeres)
   const slots = bpb*div, out=[];
   let prev=-1;
   notes.forEach((h,i)=>{
@@ -764,7 +779,7 @@ function scheduleBarInner(ev, t0){
     curRow = row.id;
     if(row.id==="bateria"){
       const step = (4*beat)/card.grid;          // les cartes de bateria són de 4 temps
-      const maxPos = card.grid;
+      const maxPos = card.grid * bpb/4;         // en 3/4 només sonen els 3 primers temps de la carta
       ["hh","oh","ride","crash","sn","ghost","kk","ghostkk","t1","t2","t3"].forEach(k=>{
         (card[k]||[]).forEach(p=>{ if(p<maxPos) DRUM[k](t0+p*step); });
       });
@@ -787,12 +802,8 @@ function scheduleBarInner(ev, t0){
       });
       return;
     }
-    // files rítmiques: cada nota [inici, durada] en negres.
-    // En ternari (12/8) la carta té 3 micropolsos que omplen un pols, i es repeteix als 4 polsos.
-    let notes;
-    if(song.metrica==="ternari"){
-      notes=[]; for(let p=0;p<4;p++) card.notes.forEach(([a,d])=>{ if(a<3) notes.push([p + a/3, d/3]); });
-    } else notes = card.notes.filter(n=>n[0] < bpb - 1e-6);
+    // files rítmiques: cada nota [inici, durada] en negres (carta binària = 4 temps, ternària = 3 temps)
+    const notes = card.notes.filter(n=>n[0] < bpb - 1e-6);
     if(row.id==="guitarra"){ guitarRhythm(t0, beat, bpb, notes, ch, rGuit); return; }
     notes.forEach((n,idx)=>{
       const t = t0 + n[0]*beat, dur = n[1]*beat;
@@ -836,7 +847,7 @@ let curBar=null;
 function showPos(ev, time, dur){
   curBar={time,dur};
   const col = song.cols[ev.ci];
-  document.getElementById("nowChord").textContent = ev.chord.name;
+  const nc = document.getElementById("nowChord"); nc.textContent = ev.chord.name; nc.style.background = chordColor(ev.chord); nc.style.color = chipStyle(ev.chord).includes("#222") ? "#222" : "#fff";
   document.getElementById("nowPos").innerHTML = `<b>${col.sec}</b> ${col.rep>1?`(volta ${ev.r+1}/${col.rep})`:""}<br><span style="color:var(--muted)">compàs ${ev.i+1} de ${ev.n} · ${ev.chord.roman}</span>`;
   document.querySelectorAll("#grid .col").forEach((el,i)=>el.classList.toggle("playing", i===ev.ci));
   const head = document.querySelectorAll("#grid .colHead")[ev.ci];
@@ -878,7 +889,7 @@ function stop(){
   document.querySelectorAll("#grid .col").forEach(el=>el.classList.remove("playing"));
   document.querySelectorAll("#grid .bar").forEach(b=>b.classList.remove("on"));
   document.querySelectorAll("#beats .beat").forEach(b=>b.classList.remove("on"));
-  document.getElementById("nowChord").textContent="–";
+  const nc0=document.getElementById("nowChord"); nc0.textContent="–"; nc0.style.background=""; nc0.style.color="";
   document.getElementById("nowPos").innerHTML=`<b>Aturat</b><br><span style="color:var(--muted)">Prem ▶ per escoltar la cançó</span>`;
 }
 function restartIfPlaying(){ if(playing){ stop(); play(); } }
@@ -899,8 +910,11 @@ const $ = id => document.getElementById(id);
 function renderMarc(){
   document.querySelectorAll("#metrica button").forEach(b=>b.classList.toggle("on", b.dataset.v===song.metrica));
   $("bpm").value = song.bpm; $("bpmLbl").textContent = song.bpm+" bpm";
-  $("key").value = song.key;
-  const preset = D.PROGRESSIONS.find(p=>p.prog===song.prog);
+  $("key").value = song.key + (song.minor ? "|m" : "");
+  // la llista de progressions canvia segons el mode
+  const progOpts = D.PROGRESSIONS.filter(p=>!!p.minor===!!song.minor).map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
+  if($("progSel").innerHTML !== progOpts) $("progSel").innerHTML = progOpts;
+  const preset = D.PROGRESSIONS.find(p=>p.prog===song.prog && !!p.minor===!!song.minor);
   $("progSel").value = preset ? preset.prog : "custom";
   $("progCustomWrap").style.display = preset ? "none" : "";
   if(!preset) $("progCustom").value = song.prog;
@@ -909,7 +923,7 @@ function renderMarc(){
 function chipsHTML(progStr){
   const ch = parseProg(progStr, song.key);
   if(!ch.length) return '<span class="chip" style="background:#fde2e2">No entenc la progressió</span>';
-  return ch.map(c=>`<span class="chip roman">${c.roman}</span><span class="chip">${c.name}</span>`).join('<span style="opacity:.4">·</span>');
+  return ch.map(c=>`<span class="chip roman" style="${chipStyle(c)}">${c.roman}</span><span class="chip">${c.name}</span>`).join('<span style="opacity:.4">·</span>');
 }
 
 function renderGrid(){
@@ -940,9 +954,9 @@ function renderGrid(){
       <select class="sec">${D.SECCIONS.map(s=>`<option ${s===col.sec?"selected":""}>${s}</option>`).join("")}</select>
       <div class="sub">
         <select class="rep" title="Quantes voltes de la roda">${[1,2,3,4].map(n=>`<option value="${n}" ${n===col.rep?"selected":""}>×${n}</option>`).join("")}</select>
-        <button class="acords ${col.prog?'own':''}" title="Acords d'aquesta part">${chords.map(c=>c.name).join(" ")}</button>
+        <button class="acords ${col.prog?'own':''}" title="Acords d'aquesta part">${chords.map(c=>`<i style="background:${chordColor(c)}"></i>${c.name}`).join(" ")}</button>
       </div>
-      <div class="bars">${chords.map(()=>'<div class="bar"></div>').join("")}</div>
+      <div class="bars">${chords.map(c=>`<div class="bar" style="background:${chordColor(c)}"></div>`).join("")}</div>
       <button class="jump" title="Salta a aquesta part (tecla ${ci+1})">▶</button>
       <div class="tools">
         <button title="Atzar en aquesta columna" data-act="dice">🎲</button>
@@ -1180,7 +1194,7 @@ function openCardModal(col,row){
 let mpCol=null;
 function openProgModal(col){
   mpCol=col;
-  const sel=$("mpSel"); sel.innerHTML = D.PROGRESSIONS.map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
+  const sel=$("mpSel"); sel.innerHTML = D.PROGRESSIONS.filter(p=>!!p.minor===!!song.minor).map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
   const cur = col.prog || song.prog; const preset = D.PROGRESSIONS.find(p=>p.prog===cur);
   sel.value = preset ? preset.prog : "custom"; $("mpCustom").style.display = preset ? "none" : ""; $("mpCustom").value = preset ? "" : cur;
   $("mpChips").innerHTML = chipsHTML(cur);
@@ -1212,13 +1226,13 @@ function loadSong(obj){
 
 /* ---------- init ---------- */
 function init(){
-  $("key").innerHTML = KEYS.map(([v,n])=>`<option value="${v}">${n} major</option>`).join("");
+  $("key").innerHTML = KEYS.map(([v,n])=>`<option value="${v}">${n} major</option>`).join("") + KEYS.map(([v,n])=>`<option value="${v}|m">${n} menor</option>`).join("");
   $("progSel").innerHTML = D.PROGRESSIONS.map(p=>`<option value="${p.prog}">${p.nom}</option>`).join("") + `<option value="custom">Personalitzada…</option>`;
 
   document.querySelectorAll("#metrica button").forEach(b=>b.onclick=()=>{ song.metrica=b.dataset.v; adaptToMetre(); changed(); restartIfPlaying(); });
   $("bpm").oninput = e=>{ song.bpm=+e.target.value; $("bpmLbl").textContent=song.bpm+" bpm"; };
   $("bpm").onchange = ()=>changed();
-  $("key").onchange = e=>{ song.key=e.target.value; changed(); };
+  $("key").onchange = e=>{ const [k,m]=e.target.value.split("|"); song.key=k; song.minor = m==="m"; if(!D.PROGRESSIONS.some(p=>p.prog===song.prog && !!p.minor===song.minor)) song.prog = song.minor ? "i VI III VII" : "I V vi IV"; changed(); };
   $("progSel").onchange = e=>{ if(e.target.value==="custom"){ $("progCustomWrap").style.display=""; $("progCustom").focus(); } else { song.prog=e.target.value; changed(); } };
   $("progCustom").oninput = e=>{ if(parseProg(e.target.value,song.key).length){ song.prog=e.target.value.trim(); $("progChips").innerHTML=chipsHTML(song.prog); renderGrid(); } else $("progChips").innerHTML=chipsHTML(e.target.value); };
   $("progCustom").onchange = ()=>changed();
