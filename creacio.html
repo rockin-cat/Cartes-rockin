@@ -8,7 +8,7 @@
 <link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=23"></script>
+<script src="dades.js?v=24"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
@@ -207,6 +207,10 @@
   .cell.rascat img{ transform:scale(1.8); }
   .opt svg.tl{ display:block; width:100%; height:26px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
   .opt svg.dg{ display:block; width:100%; height:34px; margin-top:4px; background:#fff; border-radius:4px; border:1px solid #eee; }
+  .optFoot{ display:flex; align-items:center; justify-content:space-between; gap:4px; margin-top:4px; min-height:22px; }
+  .optFoot span{ flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .optFoot .play{ width:26px; height:22px; padding:0; font-size:11px; border-radius:999px; background:var(--rk-tinta); color:var(--rk-groc); border:none; }
+  .optFoot .play.on{ background:var(--rk-groc); color:var(--rk-tinta); }
   .opt.special{ display:flex; align-items:center; justify-content:center; min-height:140px; font-size:14px; font-weight:700; }
   .modalBox .foot{ display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
   .footer{ margin-top:30px; padding:18px 0 8px; border-top:1px solid var(--border); text-align:center; font-size:12px; color:var(--muted); line-height:1.6; }
@@ -774,24 +778,22 @@ function chug(t, midis, vel, gate){
     pluck(t + i*0.006, m, gate, 0.62*vel*(1 - i*0.08)*(0.96+Math.random()*0.08), 0, gate);
   });
 }
-// Guitarra sobre un patró rítmic: l'acústica rasca (avall als temps, amunt als contratemps);
-// el rock fa power chords en corxeres curtes apagades dins de cada nota, amb el primer temps més fort.
+// apaga les cordes que sonen en un moment futur (silencis de la carta)
+function gtrStopAt(t, fade){
+  GTR.voices.filter(v=>v.t < t).forEach(v=>{ try{ v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0.0001, t, fade||0.02); }catch(e){} });
+}
+// Guitarra sobre un patró rítmic: toca cada nota tal com està escrita (una per nota, ni més ni menys)
+// i apaga les cordes als silencis, perquè la carta se senti exactament com es llegeix.
 function guitarRhythm(t0, beat, bpb, notes, ch, rGuit){
-  if(isAcoustic()){
-    notes.forEach(n=>{ const off = Math.abs(n[0]-Math.round(n[0]))>0.01; strum(t0+n[0]*beat, gtrVoicing(ch,rGuit), off?"U":"D", off?0.85:1); });
-    return;
-  }
-  const sub = 1/metre().div;                                 // corxera (o corxera de compàs compost)
-  const pc = powerChord(ch, rGuit), eighth = beat*sub, gate = Math.min(eighth*0.55, 0.18);
-  notes.forEach(n=>{
-    const nStart = n[0], nDur = n[1];
-    const k = Math.max(1, Math.round(nDur/sub));            // quantes corxeres cap dins la nota
-    for(let i=0;i<k;i++){
-      const pos = nStart + i*sub; if(pos >= bpb-1e-6) break;
-      const first = i===0, downbeat = Math.abs(pos)<1e-6;
-      const vel = downbeat ? 1.0 : first ? 0.85 : 0.68;
-      chug(t0 + pos*beat, pc, vel, first && nDur<sub*1.5 ? Math.min(nDur*beat*0.8, gate) : gate);
-    }
+  const pc = powerChord(ch, rGuit);
+  notes.forEach((n,idx)=>{
+    const start = n[0], dur = Math.min(n[1], bpb-start), t = t0 + start*beat, end = t + dur*beat;
+    const off = Math.abs(start-Math.round(start))>0.01, downbeat = Math.abs(start)<1e-6;
+    if(isAcoustic()) strum(t, gtrVoicing(ch,rGuit), off?"U":"D", downbeat ? 1 : off ? 0.85 : 0.95);
+    else chug(t, pc, downbeat ? 1.0 : off ? 0.7 : 0.85, Math.min(dur*beat*0.9, 1.5));
+    // silenci després de la nota? apaguem les cordes just al final
+    const next = idx+1<notes.length ? notes[idx+1][0] : bpb;
+    if(next - (start+dur) > 0.01 || (idx===notes.length-1 && start+dur < bpb-0.01)) gtrStopAt(end - 0.005, isAcoustic() ? 0.035 : 0.015);
   });
 }
 function guitarStrum(t, midis, dur){ if(isAcoustic()) strum(t, midis, "D", 1); else chug(t, midis.slice(0,3), 1, 0.15); }
@@ -1316,10 +1318,11 @@ function openCardModal(col,row){
   const cur = col.cells[row.id];
   const addGroup = (title)=>{ const h=document.createElement("h4"); h.textContent=title; gal.appendChild(h); };
   const addCards = (cards, kind)=> cards.forEach(card=>{
-    const o = document.createElement("div"); o.className="opt"+(card.id===cur?" sel":"")+(kind?" "+kind:"");
-    const lbl = card.propia ? `✎ ${card.nom||"Carta pròpia"}` : row.id==="bateria" ? `<b>${card.num}</b>${card.title?'<br>'+card.title:''}` : (card.nom || "");
-    o.innerHTML = `<div class="im">${cardImgHTML(card,row)}</div><div style="margin-top:4px">${lbl}</div>`;
+    const o = document.createElement("div"); o.className="opt"+(card.id===cur?" sel":"")+(kind?" "+kind:""); o._card=card;
+    const lbl = card.propia ? `✎ ${card.nom||"Carta pròpia"}` : row.id==="bateria" ? `<b>${card.num}</b>${card.title?' · '+card.title:''}` : "";
+    o.innerHTML = `<div class="im">${cardImgHTML(card,row)}</div><div class="optFoot"><span>${lbl}</span>${row.nomesVisual?"":'<button class="play" title="Escolta aquesta carta">▶</button>'}</div>`;
     o.onclick=()=>{ col.cells[row.id]=card.id; closeModals(); changed(); };
+    const pb = o.querySelector(".play"); if(pb) pb.onclick = ev=>{ ev.stopPropagation(); previewCard(row, card, col); };
     if(card.propia){ const e=document.createElement("button"); e.className="edit"; e.textContent="✎"; e.title="Edita aquesta carta"; e.onclick=ev=>{ ev.stopPropagation(); openDesigner(col,row,card); }; o.appendChild(e); }
     gal.appendChild(o);
   });
@@ -1496,10 +1499,20 @@ function dsToCard(){
 async function dsPlayPreview(){
   const card = dsToCard(); if(card.tipus!=="bateria" && !card.notes.length) return;
   audio(); if(AC.state!=="running"){ try{ await AC.resume(); }catch(e){} }
-  const ch = parseProg(song.prog, song.key)[0] || parseChord("I", song.key);
+  previewCard(ds.row, card, ds.col);
+}
+// escolta una carta sola (2 voltes) sobre el primer acord de la part
+let previewTimer=null;
+async function previewCard(row, card, col){
+  audio(); if(AC.state!=="running"){ try{ await AC.resume(); }catch(e){} }
+  if(playing) stop();
+  killAudio(); if(previewTimer){ clearTimeout(previewTimer); previewTimer=null; }
+  const ch = (col && colChords(col)[0]) || parseChord("I", song.key);
   const t = AC.currentTime+0.05, bd = barDur();
-  for(let r=0;r<2;r++){ scheduleCard(ds.row, card, ch, t+r*bd); if(ds.row.id!=="bateria"){ const hh = D.BATERIA[0]; } }
+  for(let r=0;r<2;r++) scheduleCard(row, card, ch, t+r*bd);
   curRow=null;
+  document.querySelectorAll(".optFoot .play.on").forEach(b=>b.classList.remove("on"));
+  const btn = [...document.querySelectorAll(".opt")].find(o=>o._card===card); if(btn){ const b=btn.querySelector(".play"); if(b){ b.classList.add("on"); previewTimer=setTimeout(()=>b.classList.remove("on"), 2*bd*1000); } }
 }
 function dsSave(){
   const card = dsToCard();
