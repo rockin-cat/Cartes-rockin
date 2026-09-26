@@ -108,6 +108,8 @@ window.ROCKIN_DADES = (function () {
   // Posicions en semicorxeres (0–15) si grid=16, o en tresets (0–11) si grid=12.
   const B = (id, num, o) => Object.assign({ id, num, img: `imatges/Bateria/${id}.png`, grid: 16 }, o);
   const HH8 = [0, 2, 4, 6, 8, 10, 12, 14], HH4 = [0, 4, 8, 12], HH16 = [...Array(16).keys()];
+  // Semicorxeres alternant mans (D-E): al 2 i al 4 la dreta toca la caixa i el charles calla.
+  const HH16_2i4 = HH16.filter((s) => s !== 4 && s !== 12);
   const BATERIA = [
     B("5", "1", { title: "Ramones - Blitzkrieg Bop", hh: HH4, sn: [4, 12], kk: [0, 8] }),
     B("6", "2", { hh: HH4, sn: [4, 12], kk: [0, 4, 8, 12] }),
@@ -140,9 +142,9 @@ window.ROCKIN_DADES = (function () {
     B("33", "27(2)", { title: "Urras - Adala", hh: HH8, sn: [4, 12], kk: [0, 2, 10], ghostkk: [7] }),
     B("34", "28", { hh: HH8, sn: [4, 12], ghost: [7, 9], kk: [0, 8, 10, 14] }),
     B("35", "29", { title: "Californication - Red Hot Chili Peppers", hh: HH8, sn: [4, 12], ghost: [7, 9], kk: [0, 10] }),
-    B("36", "30", { hh: HH16, sn: [4, 12], kk: [0, 8] }),
-    B("37", "31", { hh: HH16, sn: [4, 12], kk: [0, 8], ghostkk: [6] }),
-    B("38", "32", { title: "Birds of a feather - Billie Eilish", hh: HH16, sn: [4, 12], kk: [0], ghostkk: [3, 6, 10] }),
+    B("36", "30", { hh: HH16_2i4, sn: [4, 12], kk: [0, 8] }),
+    B("37", "31", { hh: HH16_2i4, sn: [4, 12], kk: [0, 8], ghostkk: [6] }),
+    B("38", "32", { title: "Birds of a feather - Billie Eilish", hh: HH16_2i4, sn: [4, 12], kk: [0], ghostkk: [3, 6, 10] }),
     // Shuffle / tresets (grid de 12)
     B("39", "1 (shuffle)", { grid: 12, hh: [...Array(12).keys()], sn: [3, 9], kk: [0, 6] }),
     B("40", "2 (shuffle)", { title: "Perfect - Ed Sheeran", grid: 12, hh: [...Array(12).keys()], sn: [3, 9], kk: [0, 5, 6] }),
