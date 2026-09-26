@@ -8,7 +8,7 @@
 <link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=20"></script>
+<script src="dades.js?v=22"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
@@ -54,6 +54,16 @@
   .chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
   .chip{ background:#eef2f6; border-radius:999px; padding:4px 10px; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
   .chip.roman{ background:#fdf0cc; }
+  .chord-chip{ display:inline-flex; flex-direction:column; align-items:center; min-width:44px; padding:3px 10px 2px; border-radius:10px; background:var(--deg); color:var(--ink); border:2px solid var(--deg); line-height:1.1; font-weight:800; font-size:15px; }
+  .chord-chip i{ font-style:normal; font-size:11px; font-weight:800; opacity:.8; }
+  #progChips{ align-self:flex-end; margin-bottom:2px; }
+  .keystrip{ margin-top:12px; padding:10px 14px; background:var(--rk-suau); border:1px solid var(--rk-linia); border-radius:4px; }
+  .keystrip-head{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; list-style:none; }
+  .keystrip-head::-webkit-details-marker{ display:none; }
+  .keystrip-mini{ display:flex; overflow:hidden; border-radius:6px; } .keystrip-mini i{ width:22px; height:14px; display:block; }
+  .funcions{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; } @media (max-width:700px){ .funcions{ grid-template-columns:1fr; } }
+  .funcio{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; background:#fff; border-radius:4px; border:1px solid var(--rk-linia); }
+  .funcio small{ color:var(--muted); }
   .hint{ font-size:12px; color:var(--muted); line-height:1.4; margin:8px 0 0; }
 
   /* ===== GRAELLA ===== */
@@ -177,8 +187,11 @@
   <div class="row">
     <label class="f">Mètrica
       <span class="seg" id="metrica">
-        <button data-v="binari" class="on">Binari (4/4)</button>
-        <button data-v="ternari">Ternari (3/4)</button>
+        <button data-v="binari" class="on">4/4</button>
+        <button data-v="3/4">3/4</button>
+        <button data-v="6/8">6/8</button>
+        <button data-v="9/8">9/8</button>
+        <button data-v="12/8">12/8</button>
       </span>
     </label>
     <label class="f">Tempo <span id="bpmLbl" style="color:#222">80 bpm</span>
@@ -190,12 +203,13 @@
     <label class="f">Progressió d'acords (roda)
       <select id="progSel"></select>
     </label>
+    <div class="chips" id="progChips"></div>
     <label class="f" id="progCustomWrap" style="display:none">Escriu-la tu (major: I, ii, iii, IV, V, vi, vii°, bVII… · menor: i, ii°, III, iv, v, VI, VII · o noms: C, Am, F, G)
       <input type="text" id="progCustom" placeholder="I V vi IV" style="width:260px">
     </label>
   </div>
-  <div class="chips" id="progChips" style="margin-top:10px"></div>
-  <p class="hint">Cada <b>columna</b> de la graella és una volta sencera d'aquesta roda d'acords (un compàs per acord). Les cartes de cada instrument es repeteixen a cada compàs seguint l'acord que toca.</p>
+  <details class="keystrip" id="keyStrip"></details>
+  <p class="hint">Cada <b>columna</b> de la graella és una volta sencera d'aquesta roda d'acords (un compàs per acord). Les cartes de cada instrument es repeteixen a cada compàs seguint l'acord que toca. La mètrica tria quines cartes es poden fer servir: 4/4 les binàries i els rascats; 3/4, 6/8, 9/8 i 12/8 les ternàries de cada tipus. El tempo és sempre el del pols (negra, o negra amb punt en 6/8, 9/8 i 12/8).</p>
 </div>
 
 <!-- ============ 2. GRAELLA ============ -->
@@ -300,8 +314,30 @@ const MAJOR = [0,2,4,5,7,9,11];
 const MINOR = [0,2,3,5,7,8,10];        // menor natural
 const isMinorKey = () => !!song.minor;
 // Colors de Hooktheory per grau de l'escala major (I vermell … vii° rosa); la menor usa els de la relativa major
-const HT_COLORS = ["#e74c3c","#f39c12","#f1c40f","#2ecc71","#3498db","#9b59b6","#ff85c0"];
-const HT_OUT = "#f7c6d9";               // acord fora de l'escala (bVII, etc.)
+const HT_COLORS = ["#ec1c24","#f7a21b","#f5e616","#3fd11a","#4b52f5","#9d3fe3","#f2459a"];   // els mateixos que al llibre i al joc de teclat
+const HT_OUT = "#f3b3ef";               // acord fora de l'escala (bVII, etc.)
+function inkFor(hex){ const n=parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255; return 0.299*r+0.587*g+0.114*b > 150 ? "#1d1d1f" : "#ffffff"; }
+// fitxa d'acord com al joc de teclat: nom a dalt, grau a sota, color del grau
+function chordChipHTML(ch, extra){
+  const c = chordColor(ch);
+  return `<span class="chord-chip${extra?' '+extra:''}" style="--deg:${c};--ink:${inkFor(c)}" title="${ch.name} · grau ${ch.roman}"><b>${ch.name}</b><i>${ch.roman}</i></span>`;
+}
+// els set acords de la tonalitat (per a la tira de colors)
+function keyChords(){
+  const tonic=keyRoot(song.key), scale=isMinorKey()?MINOR:MAJOR, names=FLAT_KEYS.has(song.key)?NOTE_FLAT:NOTE_SHARP;
+  const NUM=["I","II","III","IV","V","VI","VII"], q = isMinorKey() ? ["m","°","","m","m","",""] : ["","m","m","","","m","°"];
+  return scale.map((st,k)=>{ const root=(tonic+st)%12; const roman = q[k]==="" ? NUM[k] : q[k]==="m" ? NUM[k].toLowerCase() : NUM[k].toLowerCase()+"°";
+    return { root, tones: q[k]==="m"?[0,3,7]:q[k]==="°"?[0,3,6]:[0,4,7], name: names[root]+(q[k]==="°"?"°":q[k]), roman }; });
+}
+const FUNCIONS = [ {nom:"Tònica", text:"casa: repòs", idx:[0,5,2]}, {nom:"Predominant", text:"s'allunya de casa", idx:[3,1]}, {nom:"Dominant", text:"tensió: vol tornar a casa", idx:[4,6]} ];
+function keyStripHTML(){
+  const chords = keyChords(); const byIdx = {}; chords.forEach(c=>{ byIdx[MAJOR.indexOf(((c.root - (isMinorKey()?(keyRoot(song.key)+3)%12:keyRoot(song.key)))+12)%12)] = c; });
+  const keyName = (FLAT_KEYS.has(song.key)?NOTE_FLAT:NOTE_SHARP)[keyRoot(song.key)] + (isMinorKey()?" menor":" major");
+  return `<summary class="keystrip-head"><strong>🎨 Els colors dels acords · tonalitat de ${keyName}</strong><span class="keystrip-mini">${chords.map(c=>`<i style="background:${chordColor(c)}" title="${c.name}"></i>`).join("")}</span></summary>
+    <p class="hint" style="margin:6px 0 10px">Cada acord té el color del seu grau, com al llibre: el mateix color vol dir la mateixa funció, en qualsevol cançó. El número romà és el grau (majúscula = acord major, minúscula = menor).</p>
+    <div class="funcions">${FUNCIONS.map(f=>`<div class="funcio"><b>${f.nom}</b><small>${f.text}</small><div class="chips">${f.idx.map(i=>byIdx[i]).filter(Boolean).map(c=>chordChipHTML(c)).join("")}</div></div>`).join("")}</div>
+    <p class="hint" style="margin-top:8px">Els acords de fora de la tonalitat (per exemple el <b>♭VII</b>) són <span style="background:${HT_OUT};padding:0 6px;border-radius:4px;color:#1d1d1f">rosa clar</span>.</p>`;
+}
 function chordColor(ch){
   if(!ch) return HT_OUT;
   const tonic = keyRoot(song.key), relMajor = isMinorKey() ? (tonic+3)%12 : tonic;
@@ -671,15 +707,16 @@ function guitarRhythm(t0, beat, bpb, notes, ch, rGuit){
     notes.forEach(n=>{ const off = Math.abs(n[0]-Math.round(n[0]))>0.01; strum(t0+n[0]*beat, gtrVoicing(ch,rGuit), off?"U":"D", off?0.85:1); });
     return;
   }
-  const pc = powerChord(ch, rGuit), eighth = beat/2, gate = Math.min(eighth*0.55, 0.18);
+  const sub = 1/metre().div;                                 // corxera (o corxera de compàs compost)
+  const pc = powerChord(ch, rGuit), eighth = beat*sub, gate = Math.min(eighth*0.55, 0.18);
   notes.forEach(n=>{
     const nStart = n[0], nDur = n[1];
-    const k = Math.max(1, Math.round(nDur/0.5));            // quantes corxeres cap dins la nota
+    const k = Math.max(1, Math.round(nDur/sub));            // quantes corxeres cap dins la nota
     for(let i=0;i<k;i++){
-      const pos = nStart + i*0.5; if(pos >= bpb-1e-6) break;
+      const pos = nStart + i*sub; if(pos >= bpb-1e-6) break;
       const first = i===0, downbeat = Math.abs(pos)<1e-6;
       const vel = downbeat ? 1.0 : first ? 0.85 : 0.68;
-      chug(t0 + pos*beat, pc, vel, first && nDur<0.75 ? Math.min(nDur*beat*0.8, gate) : gate);
+      chug(t0 + pos*beat, pc, vel, first && nDur<sub*1.5 ? Math.min(nDur*beat*0.8, gate) : gate);
     }
   });
 }
@@ -700,7 +737,13 @@ let playing=false, timer=null, timeline=[], nextIdx=0, nextTime=0, uiQueue=[], r
 // Tant en binari com en ternari el compàs té 4 polsos. En ternari cada pols es divideix en 3 (12/8),
 // així les cartes de bateria en tresets (shuffle) sonen senceres i cada carta de patró ternari
 // (3 micropolsos) omple un pols i es repeteix als 4 polsos del compàs.
-const beatsPerBar = () => song.metrica==="ternari" ? 3 : 4;
+// Mètriques: pulsos per compàs i subdivisió del pols (2 = binària, 3 = ternària).
+// El tempo (bpm) sempre es refereix al pols: negra en 4/4 i 3/4, negra amb punt en 6/8, 9/8 i 12/8.
+const METRES = { "binari":{bpb:4,div:2,nom:"4/4"}, "3/4":{bpb:3,div:2,nom:"3/4"}, "6/8":{bpb:2,div:3,nom:"6/8"}, "9/8":{bpb:3,div:3,nom:"9/8"}, "12/8":{bpb:4,div:3,nom:"12/8"} };
+function metre(){ return METRES[song.metrica] || METRES.binari; }
+const beatsPerBar = () => metre().bpb;
+const isCompound = () => metre().div===3;
+const cardMetre = card => card.metre || (card.grid ? (card.grid===12 ? "compost" : "simple") : "4/4");
 const barDur = () => beatsPerBar()*60/song.bpm;
 
 function buildTimeline(){
@@ -711,8 +754,9 @@ function buildTimeline(){
   });
 }
 function deckFor(row){
-  if(row.baralla==="ritme") return song.metrica==="ternari" ? D.TERNARI : D.BINARI;
-  if(row.baralla==="bateria") return D.BATERIA;   // en 3/4 les cartes de bateria (de 4 temps) sonen només els 3 primers temps
+  if(row.baralla==="ritme") return song.metrica==="binari" ? D.BINARI : D.TERNARI.filter(c=>c.metre===song.metrica);
+  // bateria: cartes binàries per a 4/4 i 3/4, cartes de shuffle (tresets) per a 6/8, 9/8 i 12/8; sonen els pulsos que calen
+  if(row.baralla==="bateria") return D.BATERIA.filter(c => isCompound() ? c.grid===12 : c.grid!==12);
   return D.VEU;
 }
 function findCard(row, id){
@@ -725,9 +769,9 @@ const isStrum = card => !!(card && card.strum);
 // Una carta encaixa amb la mètrica? (binari: cartes mb + rascats; ternari: cartes mt). Els contorns melòdics no tenen mètrica.
 function fitsMetre(card){
   if(!card || isMelodic(card) || card.id==="veu") return true;
-  if(card.grid) return true;   // bateria: val per a les dues mètriques
-  if(song.metrica==="ternari") return !isStrum(card) && D.TERNARI.includes(card);
-  return isStrum(card) || D.BINARI.includes(card);
+  if(card.grid) return isCompound() ? card.grid===12 : card.grid!==12;   // bateria
+  if(song.metrica==="binari") return isStrum(card) || D.BINARI.includes(card);
+  return !isStrum(card) && card.metre===song.metrica;
 }
 // Quan canvia la mètrica, les cartes rítmiques que no hi encaixen se substitueixen per una de la baralla correcta
 function adaptToMetre(){
@@ -758,7 +802,7 @@ function playStrum(card, t0, beat, ch, rGuit){
 function contourEvents(card, bpb){
   const notes = []; card.contour.forEach(fr=>fr.forEach(h=>notes.push(h)));
   const n = notes.length; if(!n) return [];
-  const div = n<=bpb ? 1 : 2;   // subdivisions per pols (corxeres)
+  const div = n<=bpb ? 1 : metre().div;   // subdivisions per pols (corxeres, o tresets en compàs compost)
   const slots = bpb*div, out=[];
   let prev=-1;
   notes.forEach((h,i)=>{
@@ -778,8 +822,9 @@ function scheduleBarInner(ev, t0){
     const card = findCard(row,id); if(!card) return;
     curRow = row.id;
     if(row.id==="bateria"){
-      const step = (4*beat)/card.grid;          // les cartes de bateria són de 4 temps
-      const maxPos = card.grid * bpb/4;         // en 3/4 només sonen els 3 primers temps de la carta
+      const perPulse = card.grid/4;             // 4 semicorxeres o 3 tresets per pols
+      const step = beat/perPulse;
+      const maxPos = perPulse * bpb;            // en 3/4, 6/8 i 9/8 només sonen els primers pulsos de la carta
       ["hh","oh","ride","crash","sn","ghost","kk","ghostkk","t1","t2","t3"].forEach(k=>{
         (card[k]||[]).forEach(p=>{ if(p<maxPos) DRUM[k](t0+p*step); });
       });
@@ -803,7 +848,7 @@ function scheduleBarInner(ev, t0){
       return;
     }
     // files rítmiques: cada nota [inici, durada] en negres (carta binària = 4 temps, ternària = 3 temps)
-    const notes = card.notes.filter(n=>n[0] < bpb - 1e-6);
+    const notes = card.notes.filter(n=>n[0] < bpb - 1e-6);   // unitats = pulsos
     if(row.id==="guitarra"){ guitarRhythm(t0, beat, bpb, notes, ch, rGuit); return; }
     notes.forEach((n,idx)=>{
       const t = t0 + n[0]*beat, dur = n[1]*beat;
@@ -919,11 +964,12 @@ function renderMarc(){
   $("progCustomWrap").style.display = preset ? "none" : "";
   if(!preset) $("progCustom").value = song.prog;
   $("progChips").innerHTML = chipsHTML(song.prog);
+  const ks=$("keyStrip"); const wasOpen=ks.open; ks.innerHTML = keyStripHTML(); ks.open = wasOpen;
 }
 function chipsHTML(progStr){
   const ch = parseProg(progStr, song.key);
   if(!ch.length) return '<span class="chip" style="background:#fde2e2">No entenc la progressió</span>';
-  return ch.map(c=>`<span class="chip roman" style="${chipStyle(c)}">${c.roman}</span><span class="chip">${c.name}</span>`).join('<span style="opacity:.4">·</span>');
+  return ch.map(c=>chordChipHTML(c)).join("");
 }
 
 function renderGrid(){
@@ -1112,12 +1158,13 @@ function randomSong(){
 }
 
 /* ---------- diagrames "què entén l'app" ---------- */
-function svgRitme(card, bpb){
+function svgRitme(card, bpb, div){ div = div||2;
   // línia de temps del compàs: pulsacions com a línies, notes com a barres blaves
   const W=100, H=26, notes=card.notes;
   let g=`<svg class="tl" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
   for(let b=0;b<=bpb;b++){ const x=b/bpb*W; g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#ddd" stroke-width="${b===0||b===bpb?2:1}"/>`; }
-  for(let b=0;b<bpb;b++) for(let k=1;k<4;k++){ const x=(b+k/4)/bpb*W; g+=`<line x1="${x}" y1="${H-4}" x2="${x}" y2="${H}" stroke="#eee"/>`; }
+  const ticks = div===3 ? 3 : 4;
+  for(let b=0;b<bpb;b++) for(let k=1;k<ticks;k++){ const x=(b+k/ticks)/bpb*W; g+=`<line x1="${x}" y1="${H-4}" x2="${x}" y2="${H}" stroke="#eee"/>`; }
   notes.forEach(([a,d])=>{ if(a>=bpb) return; const x=a/bpb*W, w=Math.max(1.5, Math.min(d, bpb-a)/bpb*W-1.2);
     g+=`<rect x="${x+0.3}" y="6" width="${w}" height="${H-12}" rx="1.5" fill="#3fb4ff"/>`; });
   return g+`</svg>`;
@@ -1159,7 +1206,7 @@ function diagram(card, row){
   if(row.id==="bateria") return svgBateria(card);
   if(isMelodic(card)) return svgContorn(card, bpb);
   if(isStrum(card)) return svgRascat(card);
-  if(card.notes) return svgRitme(card, D.TERNARI.includes(card) ? 3 : 4);
+  if(card.notes) return svgRitme(card, card.metre ? METRES[card.metre].bpb : 4, card.metre ? METRES[card.metre].div : 2);
   return "";
 }
 
@@ -1170,7 +1217,7 @@ function openCardModal(col,row){
   const deck = deckFor(row);
   $("mcTitle").textContent = `${row.nom} · ${col.sec}`;
   $("mcSub").textContent = (row.nomesVisual ? "Marca si en aquesta part hi ha veu (no sona a l'app: la canteu vosaltres)." :
-    row.id==="bateria" ? "Tria el patró de bateria d'aquesta part." : `Tria el patró rítmic (${song.metrica}) que farà el ${row.nom.toLowerCase()} sobre cada acord.`) + (row.nomesVisual ? "" : " El diagrama de sota cada carta mostra com la llegeix l'app.");
+    row.id==="bateria" ? "Tria el patró de bateria d'aquesta part." : `Tria el patró rítmic (${metre().nom}) que farà el ${row.nom.toLowerCase()} sobre cada acord.`) + (row.nomesVisual ? "" : " El diagrama de sota cada carta mostra com la llegeix l'app.");
   const gal = $("mcGal"); gal.innerHTML="";
   const cur = col.cells[row.id];
   const addGroup = (title)=>{ const h=document.createElement("h4"); h.textContent=title; gal.appendChild(h); };
@@ -1215,6 +1262,8 @@ function decodeSong(s){ s=s.replace(/-/g,"+").replace(/_/g,"/"); return JSON.par
 function loadSong(obj){
   if(!obj || !Array.isArray(obj.cols)) throw new Error("Format desconegut");
   song = Object.assign(defaultSong(), obj);
+  if(song.metrica==="ternari") song.metrica="3/4";
+  if(!METRES[song.metrica]) song.metrica="binari";
   song.mix = Object.assign(defaultMix(), obj.mix||{});
   song.mix.sons = Object.assign(defaultMix().sons, (obj.mix&&obj.mix.sons)||{});
   song.cols = song.cols.map(c=>Object.assign(newCol(), c));

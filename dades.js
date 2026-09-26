@@ -77,26 +77,31 @@ window.ROCKIN_DADES = (function () {
     R("mb29", "Binari", "E.S E.S E.S E.S"), R("mb30", "Binari", "SE. SE. SE. SE."),
   ];
 
-  // ------------------------------ TERNARI (3/4) -----------------------------
-  // Compàs de 3 negres amb subdivisió binària (corxeres i semicorxeres); les cartes
-  // amb cercles partits en tres fan tresets o compàs compost dins del 3/4.
+  // ------------------------------ TERNARI: quatre mètriques diferents -------------
+  // Cada carta porta la seva mètrica i l'app no les barreja mai:
+  //   3/4  → 3 pulsos de negra amb subdivisió binària (unitat = negra)
+  //   6/8  → 2 pulsos de negra amb punt, subdivisió ternària (unitat = pulso; TTT = 3 corxeres)
+  //   9/8  → 3 pulsos de negra amb punt
+  //   12/8 → 4 pulsos de negra amb punt
+  const T = (id, str, metre) => Object.assign(R(id, "Ternari", str), { metre });
   const TERNARI = [
-    R("mt1", "Ternari", "Q Q Q"), R("mt2", "Ternari", "Q Q R"), R("mt3", "Ternari", "Q R Q"),
-    R("mt4", "Ternari", "R Q Q"), R("mt5", "Ternari", "Q R R"), R("mt6", "Ternari", "R R Q"),
-    R("mt7", "Ternari", "R Q R"), R("mt8", "Ternari", "H2 Q"), R("mt9", "Ternari", "Q H2"),
-    R("mt10", "Ternari", "H3"), R("mt11", "Ternari", "EE EE EE"), R("mt12", "Ternari", "Q Q xE"),
-    R("mt13", "Ternari", "xE Q Q"), R("mt14", "Ternari", "xE EE xE"), R("mt15", "Ternari", "Q EE xE"),
-    R("mt16", "Ternari", "R EE R"), R("mt17", "Ternari", "Q EE R"), R("mt18", "Ternari", "Q EE EE"),
-    R("mt19", "Ternari", "EE Q EE"), R("mt20", "Ternari", "EE Q Q"), R("mt21", "Ternari", "Q Q EE"),
-    R("mt22", "Ternari", "xE xE xE"), R("mt23", "Ternari", "Q xE Q"), R("mt24", "Ternari", "xE Q R"),
-    R("mt25", "Ternari", "xE Q xE"),
-    R("mt26", "Ternari", "SES SES SES"), R("mt27", "Ternari", "E.S E.S E.S"), R("mt28", "Ternari", "SE. SE. SE."),
-    R("mt29", "Ternari", "Q Q Q"), R("mt30", "Ternari", "TTT TTT TTT"),
-    R("mt31", "Ternari", "T21 T21 T21"), R("mt32", "Ternari", "T12 T12 T12"),
-    // compàs compost (6/8 dins del 3/4): dues negres amb punt
-    R("mt33", "Ternari", "D D"), R("mt34", "Ternari", "ee3 ee3"),
-    R("mt35", "Ternari", "eq eq"), R("mt36", "Ternari", "qe qe"),
+    T("mt1", "Q Q Q", "3/4"), T("mt2", "Q Q R", "3/4"), T("mt3", "Q R Q", "3/4"),
+    T("mt4", "R Q Q", "3/4"), T("mt5", "Q R R", "3/4"), T("mt6", "R R Q", "3/4"),
+    T("mt7", "R Q R", "3/4"), T("mt8", "H2 Q", "3/4"), T("mt9", "Q H2", "3/4"),
+    T("mt10", "H3", "3/4"), T("mt11", "EE EE EE", "3/4"), T("mt12", "Q Q xE", "3/4"),
+    T("mt13", "xE Q Q", "3/4"), T("mt14", "xE EE xE", "3/4"), T("mt15", "Q EE xE", "3/4"),
+    T("mt16", "R EE R", "3/4"), T("mt17", "Q EE R", "3/4"), T("mt18", "Q EE EE", "3/4"),
+    T("mt19", "EE Q EE", "3/4"), T("mt20", "EE Q Q", "3/4"), T("mt21", "Q Q EE", "3/4"),
+    T("mt22", "xE xE xE", "3/4"), T("mt23", "Q xE Q", "3/4"), T("mt24", "xE Q R", "3/4"),
+    T("mt25", "xE Q xE", "3/4"),
+    // 12/8: quatre cercles partits en tres
+    T("mt26", "TTT TTT TTT TTT", "12/8"), T("mt27", "T21 T21 T21 T21", "12/8"), T("mt28", "T12 T12 T12 T12", "12/8"),
+    // 9/8: tres cercles
+    T("mt29", "Q Q Q", "9/8"), T("mt30", "TTT TTT TTT", "9/8"), T("mt31", "T21 T21 T21", "9/8"), T("mt32", "T12 T12 T12", "9/8"),
+    // 6/8: dos cercles
+    T("mt33", "Q Q", "6/8"), T("mt34", "TTT TTT", "6/8"), T("mt35", "T12 T12", "6/8"), T("mt36", "T21 T21", "6/8"),
   ];
+
 
 
   // ------------------------------ BATERIA -----------------------------------
