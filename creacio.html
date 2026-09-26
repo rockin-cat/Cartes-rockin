@@ -8,7 +8,7 @@
 <link rel="icon" href="https://rockin.cat/wp-content/uploads/2022/07/cropped-rockin-favicon-32x32.png">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="dades.js?v=24"></script>
+<script src="dades.js?v=25"></script>
 <style>
   :root{
     /* Paleta Rockin (dels materials impresos) */
@@ -1413,7 +1413,7 @@ function svgOwnCard(card){
     const rh=(H-22-y0)/Math.max(rows.length,3);
     rows.forEach((k,i)=>{ const cy=y0+rh*(i+0.5);
       (card[k]||[]).forEach(p=>{ const cx=x0+(p+0.5)*sw; const ghost=k==="ghost"||k==="ghostkk";
-        if(k==="oh") g+=`<circle cx="${cx}" cy="${cy}" r="${Math.min(sw,rh)*0.36}" fill="#fff" stroke="${DRUM_INK[k]}" stroke-width="4"/>`;
+        if(k==="oh"){ const r=Math.min(sw,rh)*0.36; g+=`<ellipse cx="${cx}" cy="${cy+r*0.35}" rx="${r}" ry="${r*0.55}" fill="${DRUM_INK[k]}" stroke="#221F20" stroke-width="1.5"/><ellipse cx="${cx}" cy="${cy-r*0.35}" rx="${r}" ry="${r*0.55}" fill="${DRUM_INK[k]}" stroke="#221F20" stroke-width="1.5"/>`; }   // charles obert: dues monedes, com a les cartes
         else g+=`<circle cx="${cx}" cy="${cy}" r="${Math.min(sw,rh)*0.36*(ghost?0.6:1)}" fill="${DRUM_INK[k]}"/>`; }); });
   }else{
     const flat = card.contour ? card.contour.flat() : null; const maxH = flat ? Math.max(...flat,1) : 1;
@@ -1509,11 +1509,15 @@ async function previewCard(row, card, col){
   killAudio(); if(previewTimer){ clearTimeout(previewTimer); previewTimer=null; }
   const ch = (col && colChords(col)[0]) || parseChord("I", song.key);
   const t = AC.currentTime+0.05, bd = barDur();
-  for(let r=0;r<2;r++) scheduleCard(row, card, ch, t+r*bd);
+  // pulsació de fons per entendre la carta: la bateria d'aquella part o, si no n'hi ha, un charles als pulsos
+  const drumRow = ROWS.find(r=>r.id==="bateria"), beatCard = (row.id!=="bateria") ? ((col && col.cells.bateria && findCard(drumRow, col.cells.bateria)) || beatClick()) : null;
+  for(let r=0;r<2;r++){ if(beatCard) scheduleCard(drumRow, beatCard, ch, t+r*bd); scheduleCard(row, card, ch, t+r*bd); }
   curRow=null;
   document.querySelectorAll(".optFoot .play.on").forEach(b=>b.classList.remove("on"));
   const btn = [...document.querySelectorAll(".opt")].find(o=>o._card===card); if(btn){ const b=btn.querySelector(".play"); if(b){ b.classList.add("on"); previewTimer=setTimeout(()=>b.classList.remove("on"), 2*bd*1000); } }
 }
+// carta de pulsació mínima segons la mètrica (charles a cada pols, bombo al primer)
+function beatClick(){ const M=metre(), sub=M.div===3?3:4; return { id:"__beat", propia:true, tipus:"bateria", metre:song.metrica, sub, grid:M.bpb*sub, hh:Array.from({length:M.bpb},(_,i)=>i*sub), kk:[0] }; }
 function dsSave(){
   const card = dsToCard();
   if(card.tipus==="bateria" ? !DS_DRUMS.some(([k])=>card[k]) : !card.notes.length){ alert("La carta és buida: posa-hi alguna nota o cop."); return; }
